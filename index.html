@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Red Ball Game</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="game" width="900" height="550" style="width:900px;height:550px;"></canvas>
+    <div id="mainMenu">
+        <h1>Red Ball</h1>
+        <p>Roll, jump, and collect stars!</p>
+        <button class="menuBtn" id="playBtn">Play</button>
+    </div>
+    <div id="overlay">
+        <h2 id="overlayTitle">Level Complete!</h2>
+        <p id="overlayText">Stars: 3/3</p>
+        <button class="menuBtn" id="overlayBtn">Next Level</button>
+    </div>
+</div>
+<script src="redball.js"></script>
+</body>
+</html>

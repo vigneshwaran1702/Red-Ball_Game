@@ -1,0 +1,47 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+}
+#gameContainer {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(0,0,0,0.6);
+}
+canvas { display: block; cursor: default; }
+#mainMenu {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(135,206,250,0.95) 0%, rgba(100,180,255,0.95) 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    z-index: 100; transition: opacity 0.5s;
+}
+#mainMenu.hidden { opacity: 0; pointer-events: none; }
+#mainMenu h1 {
+    font-size: 64px; font-weight: 900; color: #e63946;
+    text-shadow: 3px 3px 0 #a8001a, 0 0 30px rgba(230,57,70,0.4);
+    margin-bottom: 10px; letter-spacing: 2px;
+}
+#mainMenu p { font-size: 18px; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); margin-bottom: 40px; }
+.menuBtn {
+    padding: 16px 48px; font-size: 22px; font-family: 'Outfit', sans-serif; font-weight: 700;
+    background: linear-gradient(180deg, #e63946, #c1121f); color: #fff; border: none;
+    border-radius: 50px; cursor: pointer;
+    box-shadow: 0 6px 0 #8b0000, 0 8px 20px rgba(0,0,0,0.3);
+    transition: transform 0.15s, box-shadow 0.15s; margin: 8px;
+}
+.menuBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8b0000, 0 12px 30px rgba(0,0,0,0.4); }
+.menuBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #8b0000; }
+#overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 90;
+}
+#overlay.show { display: flex; }
+#overlay h2 { font-size: 48px; font-weight: 900; color: #ffd700; text-shadow: 2px 2px 0 #b8860b; margin-bottom: 20px; }
+#overlay p { font-size: 20px; color: #fff; margin-bottom: 30px; }

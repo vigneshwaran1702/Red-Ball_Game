@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://scripts/level.gd" type="Script" id=1]
+[ext_resource path="res://scenes/Player.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/Enemy.tscn" type="PackedScene" id=3]
+[ext_resource path="res://scenes/Coin.tscn" type="PackedScene" id=4]
+
+[node name="Level01" type="Node2D"]
+script = ExtResource( 1 )
+
+# Player instance
+[node name="PlayerInstance" type="CharacterBody2D" parent="."]
+instance = ExtResource( 2 )
+position = Vector2(100, 300)
+
+# Enemy instance
+[node name="EnemyInstance" type="CharacterBody2D" parent="."]
+instance = ExtResource( 3 )
+position = Vector2(400, 300)
+
+# Coin instance
+[node name="CoinInstance" type="Area2D" parent="."]
+instance = ExtResource( 4 )
+position = Vector2(250, 250)

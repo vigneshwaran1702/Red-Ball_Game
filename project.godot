@@ -1,0 +1,9 @@
+; Engine configuration file
+; Godot Engine v4.2
+
+[application]
+config/name="RedBallGame"
+run/main_scene="res://scenes/MainMenu.tscn"
+
+[autoload]
+game_manager="res://scripts/game_manager.gd"
