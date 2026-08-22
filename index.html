@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -18,6 +18,22 @@
         <h2 id="overlayTitle">Level Complete!</h2>
         <p id="overlayText">Stars: 3/3</p>
         <button class="menuBtn" id="overlayBtn">Next Level</button>
+    </div>
+    <!-- Mobile Touch Controls -->
+    <div id="mobileControls">
+        <div id="mobileLeft">
+            <button class="touchBtn" id="btnLeft" data-key="ArrowLeft">
+                <svg viewBox="0 0 24 24" width="32" height="32"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="touchBtn" id="btnRight" data-key="ArrowRight">
+                <svg viewBox="0 0 24 24" width="32" height="32"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+        <div id="mobileRight">
+            <button class="touchBtn touchBtn--jump" id="btnJump" data-key="ArrowUp">
+                <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 5l-7 7h4v7h6v-7h4z" fill="currentColor"/></svg>
+            </button>
+        </div>
     </div>
 </div>
 <script src="redball.js"></script>

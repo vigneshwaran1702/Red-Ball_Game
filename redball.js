@@ -28,6 +28,56 @@ const keys = {};
 window.addEventListener('keydown', e => { keys[e.key] = true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault(); });
 window.addEventListener('keyup', e => { keys[e.key] = false; });
 
+// ---- Mobile Touch Controls ----
+(function initMobileControls() {
+    const btns = document.querySelectorAll('.touchBtn');
+    if (!btns.length) return;
+
+    btns.forEach(btn => {
+        const key = btn.getAttribute('data-key');
+        if (!key) return;
+
+        btn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            keys[key] = true;
+            btn.classList.add('pressed');
+        }, { passive: false });
+
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            keys[key] = false;
+            btn.classList.remove('pressed');
+        }, { passive: false });
+
+        btn.addEventListener('touchcancel', function(e) {
+            keys[key] = false;
+            btn.classList.remove('pressed');
+        });
+
+        // Also handle mouse for testing on desktop
+        btn.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            keys[key] = true;
+            btn.classList.add('pressed');
+        });
+
+        btn.addEventListener('mouseup', function(e) {
+            keys[key] = false;
+            btn.classList.remove('pressed');
+        });
+
+        btn.addEventListener('mouseleave', function(e) {
+            keys[key] = false;
+            btn.classList.remove('pressed');
+        });
+    });
+
+    // Prevent canvas from scrolling on touch
+    document.getElementById('game').addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+})();
+
 let camX = 0, camY = 0, player = null;
 let platforms = [], starObjects = [], enemyObjects = [], flagObj = null, levelWidth = 0;
 let clouds = [], particles = [];
