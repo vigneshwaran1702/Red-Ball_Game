@@ -15,7 +15,7 @@ ctx.scale(dpr, dpr);
 ctx.imageSmoothingEnabled = false;
 const W = CSS_W, H = CSS_H;
 
-let gameRunning = false, currentLevel = 0, score = 0, lives = 3;
+let gameRunning = false, gamePaused = false, currentLevel = 0, score = 0, lives = 3;
 let stars = 0, totalStars = 0, gameTime = 0;
 let highScore = parseInt(localStorage.getItem('redBallHighScore') || '0', 10);
 
@@ -25,7 +25,11 @@ const PLAYER_SPEED = 280;
 const FRICTION = 0.88;
 
 const keys = {};
-window.addEventListener('keydown', e => { keys[e.key] = true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault(); });
+window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+    if (e.key === 'Escape') { e.preventDefault(); togglePause(); }
+});
 window.addEventListener('keyup', e => { keys[e.key] = false; });
 
 // ---- Mobile Touch Controls ----
@@ -662,12 +666,15 @@ document.getElementById('overlayBtn').addEventListener('click', function() {
     if (lives <= 0) { lives = 3; score = 0; currentLevel = 0; }
     else if (currentLevel + 1 < LEVELS.length) currentLevel++;
     else { lives = 3; score = 0; currentLevel = 0; }
-    initLevel(currentLevel); gameRunning = true; lastFrameTime = performance.now(); requestAnimationFrame(gameLoop);
+    initLevel(currentLevel); gameRunning = true; gamePaused = false;
+    document.getElementById('hudButtons').classList.add('active');
+    lastFrameTime = performance.now(); requestAnimationFrame(gameLoop);
 });
 
 let lastFrameTime = 0;
 function gameLoop(timestamp) {
     if (!gameRunning) return;
+    if (gamePaused) { lastFrameTime = timestamp; requestAnimationFrame(gameLoop); return; }
     let dt = (timestamp - lastFrameTime) / 1000; lastFrameTime = timestamp;
     if (dt > 0.05) dt = 0.05; gameTime += dt;
     updatePlayer(dt); updateEnemies(dt); updateMovingPlatforms(dt);
@@ -680,8 +687,78 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
+// ---- PAUSE SYSTEM ----
+function togglePause() {
+    if (!gameRunning) return;
+    // Don't allow pause when overlays are showing
+    if (document.getElementById('overlay').classList.contains('show')) return;
+    gamePaused = !gamePaused;
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    if (gamePaused) {
+        document.getElementById('pauseLevelInfo').textContent =
+            LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)  •  Score: ' + score;
+        pauseOverlay.classList.add('show');
+    } else {
+        pauseOverlay.classList.remove('show');
+        lastFrameTime = performance.now();
+    }
+}
+
+// Pause button
+document.getElementById('btnPause').addEventListener('click', function(e) {
+    e.stopPropagation();
+    togglePause();
+});
+// Prevent touch events from propagating to game
+document.getElementById('btnPause').addEventListener('touchend', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    togglePause();
+});
+
+// Home button → go back to main menu
+document.getElementById('btnHome').addEventListener('click', function(e) {
+    e.stopPropagation();
+    goToMainMenu();
+});
+document.getElementById('btnHome').addEventListener('touchend', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    goToMainMenu();
+});
+
+// Resume
+document.getElementById('btnResume').addEventListener('click', function() {
+    gamePaused = false;
+    document.getElementById('pauseOverlay').classList.remove('show');
+    lastFrameTime = performance.now();
+});
+
+// Restart Level
+document.getElementById('btnRestart').addEventListener('click', function() {
+    gamePaused = false;
+    document.getElementById('pauseOverlay').classList.remove('show');
+    initLevel(currentLevel);
+    lastFrameTime = performance.now();
+});
+
+// Main Menu from pause
+document.getElementById('btnHomeMenu').addEventListener('click', function() {
+    goToMainMenu();
+});
+
+function goToMainMenu() {
+    gamePaused = false; gameRunning = false;
+    document.getElementById('pauseOverlay').classList.remove('show');
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('hudButtons').classList.remove('active');
+    document.getElementById('mainMenu').classList.remove('hidden');
+    // Reset game state
+    lives = 3; score = 0; currentLevel = 0;
+}
+
 document.getElementById('playBtn').addEventListener('click', function() {
     document.getElementById('mainMenu').classList.add('hidden');
     lives = 3; score = 0; currentLevel = 0; initLevel(0);
-    gameRunning = true; lastFrameTime = performance.now(); requestAnimationFrame(gameLoop);
+    gameRunning = true; gamePaused = false;
+    document.getElementById('hudButtons').classList.add('active');
+    lastFrameTime = performance.now(); requestAnimationFrame(gameLoop);
 });

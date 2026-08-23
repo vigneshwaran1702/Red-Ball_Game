@@ -46,6 +46,135 @@ canvas { display: block; cursor: default; }
 #overlay h2 { font-size: 48px; font-weight: 900; color: #ffd700; text-shadow: 2px 2px 0 #b8860b; margin-bottom: 20px; }
 #overlay p { font-size: 20px; color: #fff; margin-bottom: 30px; }
 
+/* ---- HUD Buttons (Pause & Home) ---- */
+#hudButtons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 80;
+    display: none;
+    gap: 8px;
+    align-items: center;
+}
+#hudButtons.active {
+    display: flex;
+}
+.hudBtn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+}
+.hudBtn:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: scale(1.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.hudBtn:active {
+    background: rgba(0, 0, 0, 0.6);
+    transform: scale(0.95);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ---- Pause Overlay ---- */
+#pauseOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 95;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#pauseOverlay.show {
+    display: flex;
+    opacity: 1;
+}
+#pausePanel {
+    background: linear-gradient(160deg, rgba(40, 40, 80, 0.9), rgba(20, 20, 50, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 36px 48px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+    animation: pauseSlideIn 0.3s ease-out;
+}
+@keyframes pauseSlideIn {
+    from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+#pausePanel h2 {
+    font-size: 42px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(255,255,255,0.15);
+    margin-bottom: 6px;
+    letter-spacing: 3px;
+}
+#pauseLevelInfo {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 28px;
+}
+.pauseMenuBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 36px !important;
+    font-size: 18px !important;
+    margin: 6px 0 !important;
+}
+#btnResume {
+    background: linear-gradient(180deg, #4CAF50, #388E3C) !important;
+    box-shadow: 0 5px 0 #1B5E20, 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+#btnResume:hover {
+    box-shadow: 0 7px 0 #1B5E20, 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+#btnResume:active {
+    box-shadow: 0 2px 0 #1B5E20 !important;
+}
+#btnRestart {
+    background: linear-gradient(180deg, #FF9800, #F57C00) !important;
+    box-shadow: 0 5px 0 #E65100, 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+#btnRestart:hover {
+    box-shadow: 0 7px 0 #E65100, 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+#btnRestart:active {
+    box-shadow: 0 2px 0 #E65100 !important;
+}
+#btnHomeMenu {
+    background: linear-gradient(180deg, #78909C, #546E7A) !important;
+    box-shadow: 0 5px 0 #37474F, 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+#btnHomeMenu:hover {
+    box-shadow: 0 7px 0 #37474F, 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+#btnHomeMenu:active {
+    box-shadow: 0 2px 0 #37474F !important;
+}
+
 /* ---- Mobile Touch Controls ---- */
 #gameWrapper {
     display: flex;
