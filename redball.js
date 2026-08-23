@@ -28,6 +28,7 @@ const keys = {};
 window.addEventListener('keydown', e => {
     keys[e.key] = true;
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+    if (e.key === 'Enter') { e.preventDefault(); }
     if (e.key === 'Escape') { e.preventDefault(); togglePause(); }
 });
 window.addEventListener('keyup', e => { keys[e.key] = false; });
@@ -410,9 +411,12 @@ function drawPlatform(p) {
 function drawPlayer() {
     if (player.dead) return;
     const px = player.x + camX, py = player.y + camY, r = player.radius;
-    ctx.save(); ctx.translate(px, py); ctx.rotate(player.rotation);
+    ctx.save(); ctx.translate(px, py);
+    // Draw shadow BEFORE rotation so it stays fixed at the bottom of the ball
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.beginPath(); ctx.ellipse(2, r + 4, r * 0.8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, r + 4, r * 0.8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    // Now rotate for the ball body
+    ctx.rotate(player.rotation);
     const bg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
     bg.addColorStop(0, '#FF6B6B'); bg.addColorStop(0.6, '#E63946'); bg.addColorStop(1, '#B71C1C');
     ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
@@ -658,12 +662,14 @@ function showLevelComplete() {
     document.getElementById('overlayText').textContent = 'Stars: ' + stars + '/' + totalStars + '  |  Score: ' + score;
     document.getElementById('overlayBtn').textContent = currentLevel + 1 < LEVELS.length ? 'Next Level' : 'You Win! Play Again';
     document.getElementById('overlay').classList.add('show'); gameRunning = false;
+    document.getElementById('overlayBtn').blur();
 }
 function showGameOver() {
     document.getElementById('overlayTitle').textContent = 'Game Over';
     document.getElementById('overlayText').textContent = 'Final Score: ' + score + '  |  Best: ' + highScore;
     document.getElementById('overlayBtn').textContent = 'Try Again';
     document.getElementById('overlay').classList.add('show'); gameRunning = false;
+    document.getElementById('overlayBtn').blur();
 }
 
 document.getElementById('overlayBtn').addEventListener('click', function() {
@@ -895,10 +901,12 @@ function drawMenuClouds(dt) {
 function drawMenuBall() {
     const b = menuBall;
     const px = b.x, py = b.y, r = b.radius;
-    ctx.save(); ctx.translate(px, py); ctx.rotate(b.rotation);
-    // Shadow
+    ctx.save(); ctx.translate(px, py);
+    // Shadow - drawn BEFORE rotation so it stays fixed at the bottom
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.beginPath(); ctx.ellipse(2, r + 4, r * 0.8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, r + 4, r * 0.8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    // Rotate for ball body
+    ctx.rotate(b.rotation);
     // Ball body
     const bg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
     bg.addColorStop(0, '#FF6B6B'); bg.addColorStop(0.6, '#E63946'); bg.addColorStop(1, '#B71C1C');
