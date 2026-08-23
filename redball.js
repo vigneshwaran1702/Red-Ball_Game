@@ -753,9 +753,335 @@ function goToMainMenu() {
     document.getElementById('mainMenu').classList.remove('hidden');
     // Reset game state
     lives = 3; score = 0; currentLevel = 0;
+    startMenuAnimation();
 }
 
+// ============================================================
+//  ANIMATED MAIN MENU BACKGROUND
+// ============================================================
+let menuAnimRunning = false;
+let menuBall = { x: 200, y: 300, vx: 120, vy: 0, radius: 26, rotation: 0, eyeBlink: 0 };
+let menuTime = 0;
+let menuEnvIndex = 0;
+let menuEnvTimer = 0;
+let menuTransition = 0; // 0..1 interpolation between environments
+let menuClouds = [];
+let menuParticles = [];
+
+const MENU_GRAVITY = 900;
+const MENU_BOUNCE = -0.7;
+const MENU_ENV_INTERVAL = 2.0; // seconds per environment
+const MENU_TRANSITION_SPEED = 1.8; // how fast the blend happens
+
+// Ground platforms for the menu ball to bounce on
+const MENU_PLATFORMS = [
+    { x: 0, y: 470, w: 300, h: 80 },
+    { x: 350, y: 450, w: 180, h: 100 },
+    { x: 580, y: 470, w: 320, h: 80 },
+];
+
+function initMenuClouds() {
+    menuClouds = [];
+    for (let i = 0; i < 8; i++) {
+        menuClouds.push({
+            x: Math.random() * W * 1.5,
+            y: 25 + Math.random() * 120,
+            w: 70 + Math.random() * 110,
+            h: 25 + Math.random() * 25,
+            speed: 10 + Math.random() * 18,
+            opacity: 0.4 + Math.random() * 0.4
+        });
+    }
+}
+
+function lerpColor(a, b, t) {
+    // Parse hex color and interpolate
+    const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+    const ra = (pa >> 16) & 0xFF, ga = (pa >> 8) & 0xFF, ba2 = pa & 0xFF;
+    const rb = (pb >> 16) & 0xFF, gb = (pb >> 8) & 0xFF, bb = pb & 0xFF;
+    const r = Math.round(ra + (rb - ra) * t);
+    const g = Math.round(ga + (gb - ga) * t);
+    const b2 = Math.round(ba2 + (bb - ba2) * t);
+    return '#' + ((r << 16) | (g << 8) | b2).toString(16).padStart(6, '0');
+}
+
+function getMenuEnv(t) {
+    // Smoothly interpolated environment between two levels
+    const idxA = menuEnvIndex % LEVELS.length;
+    const idxB = (menuEnvIndex + 1) % LEVELS.length;
+    const a = LEVELS[idxA], b = LEVELS[idxB];
+    return {
+        bgColor1: lerpColor(a.bgColor1, b.bgColor1, t),
+        bgColor2: lerpColor(a.bgColor2, b.bgColor2, t),
+        grassC: a.grassC.map((c, i) => lerpColor(c, b.grassC[i], t)),
+        dirtC: a.dirtC.map((c, i) => lerpColor(c, b.dirtC[i], t)),
+        hillC: a.hillC.map((c, i) => lerpColor(c, b.hillC[i], t)),
+        nameA: a.name,
+        nameB: b.name,
+    };
+}
+
+function drawMenuSky(env) {
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, env.bgColor1);
+    grad.addColorStop(1, env.bgColor2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+}
+
+function drawMenuHills(env) {
+    const offset = menuTime * 15;
+    ctx.fillStyle = env.hillC[0];
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 5) {
+        ctx.lineTo(x, 380 + Math.sin((x + offset) * 0.006) * 40 + Math.sin((x + offset) * 0.015) * 15);
+    }
+    ctx.lineTo(W, H); ctx.fill();
+
+    const o2 = menuTime * 25;
+    ctx.fillStyle = env.hillC[1];
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 5) {
+        ctx.lineTo(x, 420 + Math.sin((x + o2) * 0.008) * 30 + Math.sin((x + o2) * 0.02) * 12);
+    }
+    ctx.lineTo(W, H); ctx.fill();
+}
+
+function drawMenuPlatform(p, env) {
+    const px = p.x, py = p.y;
+    // Dirt
+    const dg = ctx.createLinearGradient(px, py + 16, px, py + p.h);
+    dg.addColorStop(0, env.dirtC[0]); dg.addColorStop(0.5, env.dirtC[1]); dg.addColorStop(1, env.dirtC[2]);
+    ctx.fillStyle = dg; ctx.fillRect(px, py + 14, p.w, p.h - 14);
+    // Grass top
+    const gg = ctx.createLinearGradient(px, py, px, py + 18);
+    gg.addColorStop(0, env.grassC[0]); gg.addColorStop(0.5, env.grassC[1]); gg.addColorStop(1, env.grassC[2]);
+    ctx.fillStyle = gg; ctx.beginPath();
+    ctx.moveTo(px, py + 18); ctx.lineTo(px, py + 4);
+    ctx.quadraticCurveTo(px, py, px + 4, py); ctx.lineTo(px + p.w - 4, py);
+    ctx.quadraticCurveTo(px + p.w, py, px + p.w, py + 4); ctx.lineTo(px + p.w, py + 18); ctx.fill();
+    // Grass blades
+    ctx.strokeStyle = env.grassC[0]; ctx.lineWidth = 2;
+    for (let wx = p.x + 8; wx < p.x + p.w - 5; wx += 14) {
+        const gh = 6 + Math.sin(wx * 0.3 + menuTime * 2) * 3;
+        ctx.beginPath(); ctx.moveTo(wx, py);
+        ctx.lineTo(wx + Math.sin(menuTime * 3 + wx) * 2, py - gh); ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+    ctx.fillStyle = env.grassC[2]; ctx.fillRect(px, py + 15, p.w, 3);
+}
+
+function drawMenuClouds(dt) {
+    menuClouds.forEach(c => {
+        c.x -= c.speed * dt * 0.3;
+        if (c.x + c.w < -100) c.x = W + 80;
+        ctx.globalAlpha = c.opacity;
+        ctx.fillStyle = '#fff';
+        const r = c.h * 0.6;
+        ctx.beginPath();
+        ctx.arc(c.x + c.w * 0.3, c.y + c.h * 0.5, r, 0, Math.PI * 2);
+        ctx.arc(c.x + c.w * 0.55, c.y + c.h * 0.3, r * 1.2, 0, Math.PI * 2);
+        ctx.arc(c.x + c.w * 0.75, c.y + c.h * 0.5, r * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    });
+}
+
+function drawMenuBall() {
+    const b = menuBall;
+    const px = b.x, py = b.y, r = b.radius;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(b.rotation);
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath(); ctx.ellipse(2, r + 4, r * 0.8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    // Ball body
+    const bg = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+    bg.addColorStop(0, '#FF6B6B'); bg.addColorStop(0.6, '#E63946'); bg.addColorStop(1, '#B71C1C');
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    // Shine
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath(); ctx.ellipse(-r * 0.25, -r * 0.3, r * 0.35, r * 0.2, -0.5, 0, Math.PI * 2); ctx.fill();
+    // Eyes (un-rotate for eyes)
+    ctx.rotate(-b.rotation);
+    const bl = b.eyeBlink > 0;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(-7, -6, 8, bl ? 1 : 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(9, -6, 8, bl ? 1 : 9, 0, 0, Math.PI * 2); ctx.fill();
+    if (!bl) {
+        const lx = b.vx > 20 ? 2 : b.vx < -20 ? -2 : 0;
+        ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(-7 + lx, -5, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9 + lx, -5, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(-6 + lx, -7, 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(10 + lx, -7, 1.8, 0, Math.PI * 2); ctx.fill();
+    }
+    // Smile
+    ctx.strokeStyle = '#8B0000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(1, 2, 7, 0.2, Math.PI - 0.2); ctx.stroke();
+    ctx.restore();
+}
+
+function spawnMenuParticle(x, y) {
+    for (let i = 0; i < 4; i++) {
+        menuParticles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 100,
+            vy: -(Math.random() * 120 + 30),
+            life: 0.4 + Math.random() * 0.3,
+            color: ['#FFD700', '#FF6B6B', '#4CAF50', '#64B5F6'][Math.floor(Math.random() * 4)],
+            radius: 2 + Math.random() * 3
+        });
+    }
+}
+
+function updateMenuParticles(dt) {
+    menuParticles = menuParticles.filter(p => {
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.vy += 300 * dt; p.life -= dt;
+        return p.life > 0;
+    });
+}
+
+function drawMenuParticles() {
+    menuParticles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+}
+
+function drawMenuEnvName(env) {
+    // Show current environment name at bottom
+    const name = menuTransition < 0.5 ? env.nameA : env.nameB;
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px Outfit';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, W / 2, H - 16);
+    ctx.restore();
+}
+
+let menuLastFrame = 0;
+function menuAnimationLoop(timestamp) {
+    if (!menuAnimRunning) return;
+    let dt = (timestamp - menuLastFrame) / 1000;
+    menuLastFrame = timestamp;
+    if (dt > 0.05) dt = 0.05;
+    menuTime += dt;
+
+    // ---- Cycle environment ----
+    menuEnvTimer += dt;
+    if (menuEnvTimer >= MENU_ENV_INTERVAL) {
+        menuEnvTimer = 0;
+        menuEnvIndex = (menuEnvIndex + 1) % LEVELS.length;
+        menuTransition = 0;
+    }
+    menuTransition = Math.min(1, menuEnvTimer / (MENU_ENV_INTERVAL * 0.5));
+    // Ease the transition (smooth step)
+    const t = menuTransition < 1 ? menuTransition * menuTransition * (3 - 2 * menuTransition) : 1;
+    const env = getMenuEnv(t > 1 ? 1 : t);
+
+    // ---- Update menu ball physics ----
+    const b = menuBall;
+    b.vy += MENU_GRAVITY * dt;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.rotation += (b.vx * dt) / b.radius;
+    b.eyeBlink -= dt;
+    if (b.eyeBlink <= -2 - Math.random() * 3) b.eyeBlink = 0.1;
+
+    // Bounce off walls
+    if (b.x - b.radius < 0) { b.x = b.radius; b.vx = Math.abs(b.vx); }
+    if (b.x + b.radius > W) { b.x = W - b.radius; b.vx = -Math.abs(b.vx); }
+
+    // Bounce off platforms
+    let onPlatform = false;
+    MENU_PLATFORMS.forEach(p => {
+        if (b.x + b.radius > p.x && b.x - b.radius < p.x + p.w) {
+            if (b.y + b.radius > p.y && b.y + b.radius < p.y + 20 && b.vy > 0) {
+                b.y = p.y - b.radius;
+                b.vy *= MENU_BOUNCE;
+                if (Math.abs(b.vy) < 50) b.vy = -250; // Keep it bouncing
+                onPlatform = true;
+                spawnMenuParticle(b.x, p.y);
+            }
+        }
+    });
+
+    // Fall off bottom → reset
+    if (b.y > H + 50) {
+        b.x = 100 + Math.random() * (W - 200);
+        b.y = 100;
+        b.vy = 0;
+        b.vx = (Math.random() > 0.5 ? 1 : -1) * (80 + Math.random() * 100);
+    }
+
+    // Slight random horizontal push for variety
+    if (Math.random() < 0.005) {
+        b.vx += (Math.random() - 0.5) * 80;
+    }
+
+    updateMenuParticles(dt);
+
+    // ---- Draw everything ----
+    drawMenuSky(env);
+
+    // Stars/sparkles in dark themes
+    const darkness = parseInt(env.bgColor1.slice(1, 3), 16);
+    if (darkness < 80) {
+        ctx.fillStyle = '#fff';
+        for (let i = 0; i < 40; i++) {
+            const sx = (i * 137.5 + menuTime * 3) % W;
+            const sy = (i * 91.3) % (H * 0.65);
+            const sz = 0.5 + Math.sin(menuTime * 2 + i) * 0.5;
+            ctx.globalAlpha = 0.2 + sz * 0.4;
+            ctx.beginPath(); ctx.arc(sx, sy, sz + 0.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    // Sun for bright themes
+    if (darkness >= 80) {
+        const sx = W - 100, sy = 70;
+        const glow = ctx.createRadialGradient(sx, sy, 15, sx, sy, 100);
+        glow.addColorStop(0, 'rgba(255,255,200,0.6)'); glow.addColorStop(0.4, 'rgba(255,255,150,0.2)'); glow.addColorStop(1, 'rgba(255,255,150,0)');
+        ctx.fillStyle = glow; ctx.fillRect(sx - 100, sy - 100, 200, 200);
+        ctx.fillStyle = '#FFF176'; ctx.beginPath(); ctx.arc(sx, sy, 30, 0, Math.PI * 2); ctx.fill();
+    }
+
+    drawMenuClouds(dt);
+    drawMenuHills(env);
+    MENU_PLATFORMS.forEach(p => drawMenuPlatform(p, env));
+    drawMenuParticles();
+    drawMenuBall();
+    drawMenuEnvName(env);
+
+    requestAnimationFrame(menuAnimationLoop);
+}
+
+function startMenuAnimation() {
+    if (menuAnimRunning) return;
+    menuAnimRunning = true;
+    menuBall = { x: 200, y: 300, vx: 120, vy: 0, radius: 26, rotation: 0, eyeBlink: 0 };
+    menuTime = 0; menuEnvTimer = 0; menuEnvIndex = 0; menuTransition = 0;
+    menuParticles = [];
+    initMenuClouds();
+    menuLastFrame = performance.now();
+    requestAnimationFrame(menuAnimationLoop);
+}
+
+function stopMenuAnimation() {
+    menuAnimRunning = false;
+}
+
+// Start menu animation on page load
+startMenuAnimation();
+
 document.getElementById('playBtn').addEventListener('click', function() {
+    stopMenuAnimation();
     document.getElementById('mainMenu').classList.add('hidden');
     lives = 3; score = 0; currentLevel = 0; initLevel(0);
     gameRunning = true; gamePaused = false;
