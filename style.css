@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Pixelify+Sans:wght@700;900&family=Press+Start+2P&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     background: #1a1a2e;
@@ -62,6 +62,278 @@ canvas { display: block; cursor: default; }
 #overlay.show { display: flex; }
 #overlay h2 { font-size: 48px; font-weight: 900; color: #ffd700; text-shadow: 2px 2px 0 #b8860b; margin-bottom: 20px; }
 #overlay p { font-size: 20px; color: #fff; margin-bottom: 30px; }
+
+/* ============================================================
+   PIXEL-ART GAME OVER OVERLAY (Reference inspired)
+   ============================================================ */
+#gameOverOverlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.65) 0%, rgba(2, 6, 23, 0.82) 100%);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 96;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#gameOverOverlay.show {
+    display: flex;
+    opacity: 1;
+    animation: goOverlayFade 0.3s ease-out forwards;
+}
+
+#gameOverContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 780px;
+    padding: 10px 20px;
+    text-align: center;
+    user-select: none;
+}
+
+/* ---- Pixel Art GAME OVER Title ---- */
+.pixel-game-over-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 24px;
+    animation: goPopIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s both,
+               goFloating 3s ease-in-out 0.65s infinite alternate;
+}
+
+.pixel-word {
+    font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
+    font-size: clamp(36px, 7vw, 68px);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    
+    /* Vivid multi-stop pixel gradient matching the reference */
+    background: linear-gradient(180deg, 
+        #FFFFFF 0%, 
+        #FFFFFF 12%, 
+        #FFF200 16%, 
+        #FFD500 38%, 
+        #FF8C00 60%, 
+        #E62400 80%, 
+        #990000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* 4-way chunky black pixel outline + deep extruded 3D shadow */
+    filter: 
+        drop-shadow(3px 0 0 #000000)
+        drop-shadow(-3px 0 0 #000000)
+        drop-shadow(0 -3px 0 #000000)
+        drop-shadow(0 3px 0 #000000)
+        drop-shadow(3px 3px 0 #000000)
+        drop-shadow(-3px 3px 0 #000000)
+        drop-shadow(0 8px 0 #000000)
+        drop-shadow(6px 14px 0 rgba(0,0,0,0.85));
+}
+
+/* ---- Pixel Score Banner ---- */
+.pixel-score-banner {
+    background: linear-gradient(180deg, rgba(20, 24, 38, 0.92), rgba(10, 12, 22, 0.95));
+    border: 3px solid #000000;
+    border-radius: 8px;
+    box-shadow: 
+        inset 0 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+        0 6px 0 #000000,
+        0 10px 24px rgba(0, 0, 0, 0.5);
+    padding: 14px 28px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    animation: goSlideIn 0.45s ease-out 0.28s both;
+}
+
+.score-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(14px, 2.8vw, 19px);
+    letter-spacing: 2px;
+}
+
+.score-label {
+    color: #FFD700;
+    text-shadow: 2px 2px 0 #000000;
+}
+
+.score-val {
+    color: #FFFFFF;
+    text-shadow: 2px 2px 0 #000000, 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.score-sub {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(10px, 1.8vw, 12px);
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    gap: 8px;
+}
+
+.best-val {
+    color: #64B5F6;
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* ---- Arcade Buttons (RESTART & MENU) ---- */
+.pixel-btn-group {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: center;
+    animation: goSlideIn 0.45s ease-out 0.45s both;
+}
+
+.arcade-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 36px;
+    border: 3px solid #000000;
+    border-radius: 6px;
+    font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+}
+
+.arcade-btn__text {
+    position: relative;
+    z-index: 2;
+    color: #FFFFFF;
+    text-shadow: 
+        2px 2px 0 #000000,
+        -1px -1px 0 #000000,
+        1px -1px 0 #000000,
+        -1px 1px 0 #000000;
+}
+
+/* Red RESTART button */
+.arcade-btn--restart {
+    background: linear-gradient(180deg, #FF6659 0%, #E63946 25%, #C1121F 65%, #7F0000 100%);
+    box-shadow: 
+        inset 0 3px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+        0 6px 0 #4A0000,
+        0 10px 16px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-btn--restart:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #FF7B70 0%, #F04653 25%, #D41A28 65%, #920000 100%);
+    box-shadow: 
+        inset 0 3px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+        0 8px 0 #4A0000,
+        0 14px 22px rgba(0, 0, 0, 0.7);
+    filter: brightness(1.08);
+}
+
+.arcade-btn--restart:active {
+    transform: translateY(4px);
+    box-shadow: 
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+        0 2px 0 #4A0000,
+        0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Blue MENU button */
+.arcade-btn--menu {
+    background: linear-gradient(180deg, #56CCF2 0%, #2F80ED 25%, #1C5EC9 65%, #0B317A 100%);
+    box-shadow: 
+        inset 0 3px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+        0 6px 0 #061A42,
+        0 10px 16px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-btn--menu:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #70D6F5 0%, #4492FA 25%, #2970E0 65%, #10419A 100%);
+    box-shadow: 
+        inset 0 3px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+        0 8px 0 #061A42,
+        0 14px 22px rgba(0, 0, 0, 0.7);
+    filter: brightness(1.08);
+}
+
+.arcade-btn--menu:active {
+    transform: translateY(4px);
+    box-shadow: 
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+        0 2px 0 #061A42,
+        0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Game Over Animations ---- */
+@keyframes goOverlayFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes goPopIn {
+    0% {
+        transform: translateY(-40px) scale(0.78);
+        opacity: 0;
+    }
+    70% {
+        transform: translateY(6px) scale(1.04);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes goFloating {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes goSlideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
 /* ---- HUD Buttons (Pause & Home) ---- */
 #hudButtons {
@@ -279,4 +551,18 @@ canvas { display: block; cursor: default; }
         width: 18px;
         height: 18px;
     }
+    
+    /* Responsive Game Over on smaller screens */
+    .pixel-btn-group {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 280px;
+    }
+    .arcade-btn {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 14px;
+    }
 }
+

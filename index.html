@@ -54,6 +54,33 @@
             <p id="overlayText">Stars: 3/3</p>
             <button class="menuBtn" id="overlayBtn">Next Level</button>
         </div>
+        <!-- Pixel-Art Game Over Overlay -->
+        <div id="gameOverOverlay">
+            <div id="gameOverContainer">
+                <div class="pixel-game-over-title" aria-label="GAME OVER">
+                    <div class="pixel-word" data-text="GAME">GAME</div>
+                    <div class="pixel-word" data-text="OVER">OVER</div>
+                </div>
+                <div class="pixel-score-banner">
+                    <div class="score-main">
+                        <span class="score-label">YOUR SCORE:</span>
+                        <span class="score-val" id="gameOverScoreVal">0</span>
+                    </div>
+                    <div class="score-sub">
+                        <span class="best-label">BEST SCORE:</span>
+                        <span class="best-val" id="gameOverBestVal">0</span>
+                    </div>
+                </div>
+                <div class="pixel-btn-group">
+                    <button class="arcade-btn arcade-btn--restart" id="btnGameOverRestart" type="button">
+                        <span class="arcade-btn__text">RESTART</span>
+                    </button>
+                    <button class="arcade-btn arcade-btn--menu" id="btnGameOverMenu" type="button">
+                        <span class="arcade-btn__text">MENU</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- Mobile Touch Controls (below game screen) -->
     <div id="mobileControls">
