@@ -15,6 +15,40 @@
             <p>Roll, jump, and collect stars!</p>
             <button class="menuBtn" id="playBtn">Play</button>
         </div>
+        <!-- HUD Buttons (Pause & Home) -->
+        <div id="hudButtons">
+            <button class="hudBtn" id="btnPause" title="Pause (Esc)">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                    <rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/>
+                    <rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>
+                </svg>
+            </button>
+            <button class="hudBtn" id="btnHome" title="Home">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+                    <path d="M3 12l9-9 9 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <!-- Pause Overlay -->
+        <div id="pauseOverlay">
+            <div id="pausePanel">
+                <h2>Paused</h2>
+                <p id="pauseLevelInfo"></p>
+                <button class="menuBtn pauseMenuBtn" id="btnResume">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="margin-right:8px;vertical-align:middle;"><polygon points="5,3 19,12 5,21"/></svg>
+                    Resume
+                </button>
+                <button class="menuBtn pauseMenuBtn" id="btnRestart">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    Restart Level
+                </button>
+                <button class="menuBtn pauseMenuBtn" id="btnHomeMenu">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle;"><path d="M3 12l9-9 9 9"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+                    Main Menu
+                </button>
+            </div>
+        </div>
         <div id="overlay">
             <h2 id="overlayTitle">Level Complete!</h2>
             <p id="overlayText">Stars: 3/3</p>
