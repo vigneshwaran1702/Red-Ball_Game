@@ -533,17 +533,22 @@ function drawHeart(x, y, filled) {
     ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
 }
 function drawHUD() {
+    // Row 1: Hearts + lives count (top-left)
     for (let i = 0; i < 3; i++) drawHeart(22 + i * 38, 28, i < lives);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Outfit'; ctx.textAlign = 'left';
     ctx.fillText('x' + lives, 22 + 3 * 38 + 2, 34);
-    ctx.fillStyle = '#FFD700'; ctx.font = 'bold 18px Outfit'; ctx.textAlign = 'right';
-    ctx.fillText('Stars: ' + stars + '/' + totalStars, W - 115, 34);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '15px Outfit'; ctx.textAlign = 'center';
-    ctx.fillText(LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)', W / 2, 24);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Outfit'; ctx.textAlign = 'right';
-    ctx.fillText('Score: ' + score, W - 115, 56);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '12px Outfit';
-    ctx.fillText('Best: ' + highScore, W - 115, 72);
+
+    // Row 2: Stars + Score (left side, below hearts — avoids pause/home buttons on right)
+    ctx.fillStyle = '#FFD700'; ctx.font = 'bold 16px Outfit'; ctx.textAlign = 'left';
+    ctx.fillText('\u2B50 ' + stars + '/' + totalStars, 24, 60);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Outfit';
+    ctx.fillText('Score: ' + score, 130, 60);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '13px Outfit';
+    ctx.fillText('Best: ' + highScore, 130, 78);
+
+    // Level name (centered, slightly lower to avoid button overlap)
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '14px Outfit'; ctx.textAlign = 'center';
+    ctx.fillText(LEVELS[currentLevel].name + '  Lv ' + (currentLevel + 1) + '/10', W / 2, 18);
 }
 // ---- PARTICLES ----
 function spawnParticles(x, y, color, count) {
