@@ -537,13 +537,13 @@ function drawHUD() {
     ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Outfit'; ctx.textAlign = 'left';
     ctx.fillText('x' + lives, 22 + 3 * 38 + 2, 34);
     ctx.fillStyle = '#FFD700'; ctx.font = 'bold 18px Outfit'; ctx.textAlign = 'right';
-    ctx.fillText('Stars: ' + stars + '/' + totalStars, W - 20, 34);
+    ctx.fillText('Stars: ' + stars + '/' + totalStars, W - 115, 34);
     ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = '15px Outfit'; ctx.textAlign = 'center';
     ctx.fillText(LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)', W / 2, 24);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Outfit'; ctx.textAlign = 'right';
-    ctx.fillText('Score: ' + score, W - 20, 56);
+    ctx.fillText('Score: ' + score, W - 115, 56);
     ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '12px Outfit';
-    ctx.fillText('Best: ' + highScore, W - 20, 72);
+    ctx.fillText('Best: ' + highScore, W - 115, 72);
 }
 // ---- PARTICLES ----
 function spawnParticles(x, y, color, count) {
