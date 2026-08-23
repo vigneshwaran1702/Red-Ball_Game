@@ -264,4 +264,19 @@ canvas { display: block; cursor: default; }
         width: 100% !important;
         height: auto !important;
     }
+    /* Ensure HUD buttons stay visible and don't crowd the score on mobile */
+    #hudButtons {
+        top: 6px;
+        right: 6px;
+        gap: 6px;
+    }
+    .hudBtn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }
+    .hudBtn svg {
+        width: 18px;
+        height: 18px;
+    }
 }
