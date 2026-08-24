@@ -14,8 +14,14 @@ body {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 0 60px rgba(0,0,0,0.6);
+    max-width: 100vw;
 }
-canvas { display: block; cursor: default; }
+canvas {
+    display: block;
+    cursor: default;
+    max-width: 100%;
+    height: auto;
+}
 #mainMenu {
     position: absolute; inset: 0;
     background: transparent;
@@ -69,15 +75,24 @@ canvas { display: block; cursor: default; }
 #gameOverOverlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.65) 0%, rgba(2, 6, 23, 0.82) 100%);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.72) 0%, rgba(2, 6, 23, 0.88) 100%);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 96;
     opacity: 0;
+    padding: clamp(6px, 1.5vh, 16px);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     transition: opacity 0.3s ease;
+    box-sizing: border-box;
+}
+
+#gameOverOverlay::-webkit-scrollbar {
+    display: none;
 }
 
 #gameOverOverlay.show {
@@ -92,33 +107,36 @@ canvas { display: block; cursor: default; }
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 780px;
-    padding: 10px 20px;
+    max-width: 600px;
+    max-height: 100%;
+    padding: 0;
     text-align: center;
     user-select: none;
+    margin: auto;
+    box-sizing: border-box;
 }
 
 /* ---- Pixel Art GAME OVER Title ---- */
 .pixel-game-over-title {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    margin-bottom: 24px;
+    gap: clamp(8px, 2.2vw, 18px);
+    margin-bottom: clamp(10px, 2.5vh, 22px);
     animation: goPopIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s both,
                goFloating 3s ease-in-out 0.65s infinite alternate;
 }
 
 .pixel-word {
     font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
-    font-size: clamp(36px, 7vw, 68px);
+    font-size: clamp(22px, 5.5vw, 54px);
     font-weight: 900;
-    line-height: 1.12;
-    letter-spacing: 6px;
+    line-height: 1.1;
+    letter-spacing: clamp(2px, 0.6vw, 5px);
     text-transform: uppercase;
     
-    /* Vivid multi-stop pixel gradient matching the reference */
+    /* Vivid multi-stop pixel gradient */
     background: linear-gradient(180deg, 
         #FFFFFF 0%, 
         #FFFFFF 12%, 
@@ -127,37 +145,39 @@ canvas { display: block; cursor: default; }
         #FF8C00 60%, 
         #E62400 80%, 
         #990000 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     
-    /* 4-way chunky black pixel outline + deep extruded 3D shadow */
+    /* 4-way chunky black pixel outline + extruded 3D shadow */
     filter: 
-        drop-shadow(3px 0 0 #000000)
-        drop-shadow(-3px 0 0 #000000)
-        drop-shadow(0 -3px 0 #000000)
-        drop-shadow(0 3px 0 #000000)
-        drop-shadow(3px 3px 0 #000000)
-        drop-shadow(-3px 3px 0 #000000)
-        drop-shadow(0 8px 0 #000000)
-        drop-shadow(6px 14px 0 rgba(0,0,0,0.85));
+        drop-shadow(2px 0 0 #000000)
+        drop-shadow(-2px 0 0 #000000)
+        drop-shadow(0 -2px 0 #000000)
+        drop-shadow(0 2px 0 #000000)
+        drop-shadow(2px 2px 0 #000000)
+        drop-shadow(-2px 2px 0 #000000)
+        drop-shadow(0 5px 0 #000000)
+        drop-shadow(4px 8px 0 rgba(0,0,0,0.85));
 }
 
 /* ---- Pixel Score Banner ---- */
 .pixel-score-banner {
-    background: linear-gradient(180deg, rgba(20, 24, 38, 0.92), rgba(10, 12, 22, 0.95));
-    border: 3px solid #000000;
+    background: linear-gradient(180deg, rgba(20, 24, 38, 0.94), rgba(10, 12, 22, 0.97));
+    border: 2.5px solid #000000;
     border-radius: 8px;
     box-shadow: 
         inset 0 2px 0 rgba(255, 255, 255, 0.2),
         inset 0 -2px 0 rgba(0, 0, 0, 0.6),
-        0 6px 0 #000000,
-        0 10px 24px rgba(0, 0, 0, 0.5);
-    padding: 14px 28px;
-    margin-bottom: 28px;
+        0 4px 0 #000000,
+        0 8px 20px rgba(0, 0, 0, 0.5);
+    padding: clamp(6px, 1.6vh, 12px) clamp(14px, 3.5vw, 26px);
+    margin-bottom: clamp(10px, 2.5vh, 24px);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: clamp(4px, 1vh, 8px);
     align-items: center;
+    max-width: 90%;
     animation: goSlideIn 0.45s ease-out 0.28s both;
 }
 
@@ -165,10 +185,10 @@ canvas { display: block; cursor: default; }
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: clamp(6px, 1.5vw, 12px);
     font-family: 'Press Start 2P', monospace;
-    font-size: clamp(14px, 2.8vw, 19px);
-    letter-spacing: 2px;
+    font-size: clamp(11px, 2.2vw, 16px);
+    letter-spacing: clamp(1px, 0.3vw, 2px);
 }
 
 .score-label {
@@ -183,11 +203,13 @@ canvas { display: block; cursor: default; }
 
 .score-sub {
     font-family: 'Press Start 2P', monospace;
-    font-size: clamp(10px, 1.8vw, 12px);
-    letter-spacing: 1px;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: clamp(9px, 1.6vw, 11px);
+    letter-spacing: clamp(0.5px, 0.2vw, 1px);
+    color: rgba(255, 255, 255, 0.65);
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 1vw, 8px);
 }
 
 .best-val {
@@ -198,9 +220,12 @@ canvas { display: block; cursor: default; }
 /* ---- Arcade Buttons (RESTART & MENU) ---- */
 .pixel-btn-group {
     display: flex;
-    gap: 24px;
+    flex-direction: row;
+    gap: clamp(8px, 2vw, 20px);
     justify-content: center;
     align-items: center;
+    width: 100%;
+    max-width: 440px;
     animation: goSlideIn 0.45s ease-out 0.45s both;
 }
 
@@ -209,18 +234,21 @@ canvas { display: block; cursor: default; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 16px 36px;
-    border: 3px solid #000000;
+    padding: clamp(8px, 1.6vh, 14px) clamp(16px, 3.5vw, 32px);
+    border: 2.5px solid #000000;
     border-radius: 6px;
     font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
-    font-size: 16px;
+    font-size: clamp(11px, 2vw, 15px);
     font-weight: 900;
-    letter-spacing: 2px;
+    letter-spacing: clamp(1px, 0.3vw, 2px);
     cursor: pointer;
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
+    white-space: nowrap;
     transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+    flex: 1 1 auto;
+    max-width: 180px;
 }
 
 .arcade-btn__text {
@@ -240,8 +268,8 @@ canvas { display: block; cursor: default; }
     box-shadow: 
         inset 0 3px 0 rgba(255, 255, 255, 0.45),
         inset 0 -3px 0 rgba(0, 0, 0, 0.5),
-        0 6px 0 #4A0000,
-        0 10px 16px rgba(0, 0, 0, 0.6);
+        0 5px 0 #4A0000,
+        0 8px 14px rgba(0, 0, 0, 0.6);
 }
 
 .arcade-btn--restart:hover {
@@ -250,13 +278,13 @@ canvas { display: block; cursor: default; }
     box-shadow: 
         inset 0 3px 0 rgba(255, 255, 255, 0.5),
         inset 0 -3px 0 rgba(0, 0, 0, 0.5),
-        0 8px 0 #4A0000,
-        0 14px 22px rgba(0, 0, 0, 0.7);
+        0 7px 0 #4A0000,
+        0 12px 20px rgba(0, 0, 0, 0.7);
     filter: brightness(1.08);
 }
 
 .arcade-btn--restart:active {
-    transform: translateY(4px);
+    transform: translateY(3px);
     box-shadow: 
         inset 0 2px 0 rgba(255, 255, 255, 0.3),
         inset 0 -2px 0 rgba(0, 0, 0, 0.6),
@@ -270,8 +298,8 @@ canvas { display: block; cursor: default; }
     box-shadow: 
         inset 0 3px 0 rgba(255, 255, 255, 0.45),
         inset 0 -3px 0 rgba(0, 0, 0, 0.5),
-        0 6px 0 #061A42,
-        0 10px 16px rgba(0, 0, 0, 0.6);
+        0 5px 0 #061A42,
+        0 8px 14px rgba(0, 0, 0, 0.6);
 }
 
 .arcade-btn--menu:hover {
@@ -280,13 +308,13 @@ canvas { display: block; cursor: default; }
     box-shadow: 
         inset 0 3px 0 rgba(255, 255, 255, 0.5),
         inset 0 -3px 0 rgba(0, 0, 0, 0.5),
-        0 8px 0 #061A42,
-        0 14px 22px rgba(0, 0, 0, 0.7);
+        0 7px 0 #061A42,
+        0 12px 20px rgba(0, 0, 0, 0.7);
     filter: brightness(1.08);
 }
 
 .arcade-btn--menu:active {
-    transform: translateY(4px);
+    transform: translateY(3px);
     box-shadow: 
         inset 0 2px 0 rgba(255, 255, 255, 0.3),
         inset 0 -2px 0 rgba(0, 0, 0, 0.6),
@@ -518,19 +546,20 @@ canvas { display: block; cursor: default; }
     background: rgba(230, 57, 70, 0.55);
 }
 
-/* Show on touch devices or narrow screens */
+/* Show touch controls on touch devices */
 @media (hover: none) and (pointer: coarse) {
     #mobileControls { display: flex; }
 }
-@media (max-width: 1024px) and (hover: none) {
-    #mobileControls { display: flex; }
+
+@media (max-width: 1024px) {
+    #mobileControls {
+        border-radius: 0;
+    }
     #gameContainer {
         border-radius: 0;
         width: 100vw !important;
+        max-width: 100vw;
         height: auto !important;
-    }
-    #mobileControls {
-        border-radius: 0;
     }
     canvas {
         width: 100% !important;
@@ -551,18 +580,97 @@ canvas { display: block; cursor: default; }
         width: 18px;
         height: 18px;
     }
-    
-    /* Responsive Game Over on smaller screens */
+}
+
+/* Medium-small screens / mobile view adjustments */
+@media (max-width: 680px), (max-height: 520px) {
+    .pixel-game-over-title {
+        gap: 8px;
+        margin-bottom: clamp(6px, 1.8vh, 12px);
+    }
+    .pixel-word {
+        font-size: clamp(16px, 4.8vw, 28px);
+        letter-spacing: 2px;
+        filter: 
+            drop-shadow(2px 0 0 #000000)
+            drop-shadow(-2px 0 0 #000000)
+            drop-shadow(0 -2px 0 #000000)
+            drop-shadow(0 2px 0 #000000)
+            drop-shadow(2px 2px 0 #000000)
+            drop-shadow(0 3px 0 #000000)
+            drop-shadow(2px 5px 0 rgba(0,0,0,0.85));
+    }
+    .pixel-score-banner {
+        padding: clamp(4px, 1vh, 8px) clamp(10px, 3vw, 18px);
+        margin-bottom: clamp(6px, 1.8vh, 14px);
+        gap: 3px;
+        border-width: 2px;
+        box-shadow: 
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 2px 0 #000000,
+            0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+    .score-main {
+        font-size: clamp(9.5px, 2.2vw, 12px);
+        gap: 6px;
+    }
+    .score-sub {
+        font-size: clamp(7.5px, 1.8vw, 9.5px);
+        gap: 4px;
+    }
     .pixel-btn-group {
-        flex-direction: column;
-        gap: 12px;
+        gap: 8px;
         width: 100%;
-        max-width: 280px;
+        max-width: 320px;
     }
     .arcade-btn {
-        width: 100%;
-        padding: 14px 20px;
-        font-size: 14px;
+        padding: clamp(7px, 1.2vh, 10px) clamp(10px, 2.5vw, 18px);
+        font-size: clamp(9px, 2vw, 12px);
+        letter-spacing: 1px;
+        border-width: 2px;
+    }
+    #pausePanel {
+        padding: 20px 24px;
+        border-radius: 16px;
+    }
+    #pausePanel h2 {
+        font-size: 28px;
+    }
+    .pauseMenuBtn {
+        padding: 10px 20px !important;
+        font-size: 15px !important;
+    }
+}
+
+/* Extra small / landscape phone screens */
+@media (max-width: 380px), (max-height: 380px) {
+    .pixel-game-over-title {
+        gap: 6px;
+        margin-bottom: 5px;
+    }
+    .pixel-word {
+        font-size: clamp(13px, 4vw, 18px);
+        letter-spacing: 1px;
+    }
+    .pixel-score-banner {
+        padding: 3px 8px;
+        margin-bottom: 6px;
+        gap: 2px;
+    }
+    .score-main {
+        font-size: 8.5px;
+    }
+    .score-sub {
+        font-size: 7px;
+    }
+    .pixel-btn-group {
+        gap: 6px;
+        max-width: 260px;
+    }
+    .arcade-btn {
+        padding: 6px 8px;
+        font-size: 8.5px;
+        letter-spacing: 0.5px;
     }
 }
 
