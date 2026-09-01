@@ -61,6 +61,47 @@ canvas {
 }
 .menuBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8b0000, 0 12px 30px rgba(0,0,0,0.4); }
 .menuBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #8b0000; }
+
+.soundMenuBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 30px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+.soundMenuBtn:hover {
+    background: rgba(0, 0, 0, 0.55);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.soundMenuBtn:active {
+    transform: translateY(1px);
+}
+.soundMenuBtn.muted {
+    color: rgba(255, 255, 255, 0.55);
+    border-color: rgba(255, 100, 100, 0.3);
+}
+.hudBtn.muted {
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.4);
+}
+.hidden-icon {
+    display: none !important;
+}
 #overlay {
     position: absolute; inset: 0; background: rgba(0,0,0,0.6);
     display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 90;
