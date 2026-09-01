@@ -50,12 +50,6 @@ class SoundManager {
         this.bgmGain = null;
         this.sfxGain = null;
         
-        // Continuous rolling sound nodes
-        this.rollGain = null;
-        this.rollFilter = null;
-        this.rollNoise = null;
-        this.rollSubOsc = null;
-        
         // BGM Sequencer state
         this.bgmPlaying = false;
         this.bgmTimer = null;
@@ -94,7 +88,6 @@ class SoundManager {
             this.sfxGain.gain.setValueAtTime(0.55, this.ctx.currentTime);
             this.sfxGain.connect(this.masterGain);
             
-            this.setupRollingSound();
             this.updateMuteUI();
         } catch (e) {
             console.warn('Web Audio API not supported or blocked:', e);
@@ -115,140 +108,6 @@ class SoundManager {
         ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(evt => {
             window.addEventListener(evt, unlock, { once: false, passive: true });
         });
-    }
-    
-    setupRollingSound() {
-        if (!this.ctx) return;
-        // Generate continuous white/pink noise buffer for tactile surface rumble
-        const bufferSize = Math.floor(this.ctx.sampleRate * 2);
-        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        let lastOut = 0.0;
-        for (let i = 0; i < bufferSize; i++) {
-            const white = Math.random() * 2 - 1;
-            output[i] = (lastOut + (0.02 * white)) / 1.02;
-            lastOut = output[i];
-            output[i] *= 3.5;
-        }
-        
-        this.rollNoise = this.ctx.createBufferSource();
-        this.rollNoise.buffer = noiseBuffer;
-        this.rollNoise.loop = true;
-        
-        this.rollFilter = this.ctx.createBiquadFilter();
-        this.rollFilter.type = 'lowpass';
-        this.rollFilter.frequency.setValueAtTime(160, this.ctx.currentTime);
-        this.rollFilter.Q.setValueAtTime(2.2, this.ctx.currentTime);
-        
-        this.rollGain = this.ctx.createGain();
-        this.rollGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
-        
-        // Sub rumble oscillator for solid ball body resonance
-        this.rollSubOsc = this.ctx.createOscillator();
-        this.rollSubOsc.type = 'triangle';
-        this.rollSubOsc.frequency.setValueAtTime(65, this.ctx.currentTime);
-        
-        const subGain = this.ctx.createGain();
-        subGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-        this.rollSubOsc.connect(subGain);
-        subGain.connect(this.rollFilter);
-        
-        this.rollNoise.connect(this.rollFilter);
-        this.rollFilter.connect(this.rollGain);
-        this.rollGain.connect(this.sfxGain);
-        
-        try {
-            this.rollNoise.start(0);
-            this.rollSubOsc.start(0);
-        } catch(e) {}
-    }
-    
-    updateRoll(intensity) { // intensity: 0 to 1 based on velocity / max speed
-        if (!this.ctx || !this.rollGain) return;
-        const now = this.ctx.currentTime;
-        if (this.muted || intensity <= 0.02 || !gameRunning || gamePaused) {
-            this.rollGain.gain.setTargetAtTime(0.0001, now, 0.04);
-            return;
-        }
-        
-        const clamped = Math.min(1, Math.max(0, intensity));
-        const targetVol = clamped * 0.45;
-        const targetFreq = 160 + clamped * 420;
-        const targetSubFreq = 60 + clamped * 50;
-        
-        this.rollGain.gain.setTargetAtTime(targetVol, now, 0.05);
-        this.rollFilter.frequency.setTargetAtTime(targetFreq, now, 0.05);
-        if (this.rollSubOsc) {
-            this.rollSubOsc.frequency.setTargetAtTime(targetSubFreq, now, 0.05);
-        }
-    }
-    
-    stopRoll() {
-        if (!this.ctx || !this.rollGain) return;
-        this.rollGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.03);
-    }
-    
-    playJump(pitchMultiplier = 1) {
-        if (!this.ctx || this.muted) return;
-        this.init();
-        const now = this.ctx.currentTime;
-        
-        // Upward pitch sweep (bouncy boing)
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.type = 'sine';
-        const startFreq = 150 * pitchMultiplier;
-        const endFreq = 540 * pitchMultiplier;
-        
-        osc.frequency.setValueAtTime(startFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.14);
-        
-        gain.gain.setValueAtTime(0.38, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-        
-        osc.connect(gain);
-        gain.connect(this.sfxGain);
-        
-        osc.start(now);
-        osc.stop(now + 0.2);
-        
-        // Subtle harmonic tactile pop
-        const popOsc = this.ctx.createOscillator();
-        const popGain = this.ctx.createGain();
-        popOsc.type = 'triangle';
-        popOsc.frequency.setValueAtTime(320 * pitchMultiplier, now);
-        popOsc.frequency.exponentialRampToValueAtTime(80 * pitchMultiplier, now + 0.04);
-        popGain.gain.setValueAtTime(0.22, now);
-        popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        
-        popOsc.connect(popGain);
-        popGain.connect(this.sfxGain);
-        popOsc.start(now);
-        popOsc.stop(now + 0.06);
-    }
-    
-    playBounce() {
-        if (!this.ctx || this.muted) return;
-        this.init();
-        const now = this.ctx.currentTime;
-        
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(750, now + 0.16);
-        osc.frequency.exponentialRampToValueAtTime(580, now + 0.28);
-        
-        gain.gain.setValueAtTime(0.48, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-        
-        osc.connect(gain);
-        gain.connect(this.sfxGain);
-        
-        osc.start(now);
-        osc.stop(now + 0.32);
     }
     
     playStomp() {
@@ -1105,10 +964,7 @@ function updateMovingPlatforms(dt) {
 function updateBouncePads(dt) { bouncePads.forEach(b => { if (b.anim > 0) b.anim -= dt * 4; if (b.anim < 0) b.anim = 0; }); }
 
 function updatePlayer(dt) {
-    if (player.dead || player.won) {
-        soundManager.updateRoll(0);
-        return;
-    }
+    if (player.dead || player.won) return;
     if (keys['ArrowLeft'] || keys['a']) player.vx -= PLAYER_SPEED * 4 * dt;
     else if (keys['ArrowRight'] || keys['d']) player.vx += PLAYER_SPEED * 4 * dt;
     else player.vx *= FRICTION;
@@ -1116,7 +972,6 @@ function updatePlayer(dt) {
     if ((keys['ArrowUp'] || keys['w'] || keys[' ']) && player.onGround) {
         player.vy = JUMP_VEL;
         player.onGround = false;
-        soundManager.playJump();
     }
     player.vy += GRAVITY * dt;
     player.x += player.vx * dt; player.y += player.vy * dt;
@@ -1145,13 +1000,6 @@ function updatePlayer(dt) {
         }
     });
 
-    // Real-time rolling sound modulation based on surface contact & velocity
-    if (player.onGround && Math.abs(player.vx) > 15) {
-        soundManager.updateRoll(Math.abs(player.vx) / PLAYER_SPEED);
-    } else {
-        soundManager.updateRoll(0);
-    }
-
     starObjects.forEach(s => {
         if (!s.collected && Math.hypot(player.x - s.x, player.y - s.y) < player.radius + s.radius) {
             s.collected = true; stars++; score += 100; spawnParticles(s.x, s.y, '#FFD700', 10);
@@ -1179,13 +1027,11 @@ function updatePlayer(dt) {
     bouncePads.forEach(b => {
         if (circleRectCollision(player.x, player.y, player.radius, b.x, b.y - 2, b.w, 18) && player.vy > 0) {
             player.vy = JUMP_VEL * 1.3; player.onGround = false; b.anim = 1; spawnParticles(b.x + b.w / 2, b.y, '#FF5722', 5);
-            soundManager.playBounce();
         }
     });
 
     if (flagObj && Math.hypot(player.x - flagObj.x, player.y - flagObj.y) < 40) {
         player.won = true; score += 500;
-        soundManager.stopRoll();
         soundManager.playWin();
         if (score > highScore) { highScore = score; localStorage.setItem('redBallHighScore', highScore); }
         localStorage.setItem('redBallScore', score); setTimeout(showLevelComplete, 800);
@@ -1196,7 +1042,6 @@ function updatePlayer(dt) {
 
 function playerDie() {
     if (player.dead) return; player.dead = true; lives--;
-    soundManager.stopRoll();
     soundManager.playDeath();
     spawnParticles(player.x, player.y, '#E63946', 15);
     if (lives <= 0) setTimeout(showGameOver, 600);
@@ -1223,7 +1068,6 @@ function showLevelComplete() {
 function showGameOver() {
     gameOverActive = true;
     gameOverTime = 0;
-    soundManager.stopRoll();
     
     // Update score displays on the pixel-art Game Over overlay
     const scoreValEl = document.getElementById('gameOverScoreVal');
@@ -1333,7 +1177,6 @@ function togglePause() {
     gamePaused = !gamePaused;
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (gamePaused) {
-        soundManager.stopRoll();
         document.getElementById('pauseLevelInfo').textContent =
             LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)  •  Score: ' + score;
         pauseOverlay.classList.add('show');
@@ -1408,7 +1251,6 @@ document.getElementById('btnHomeMenu').addEventListener('click', function() {
 
 function goToMainMenu() {
     hideGameOverOverlay();
-    soundManager.stopRoll();
     gamePaused = false; gameRunning = false; gameOverActive = false;
     document.getElementById('pauseOverlay').classList.remove('show');
     document.getElementById('overlay').classList.remove('show');
