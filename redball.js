@@ -40,7 +40,8 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.key] = false; });
 
 // ============================================================
-//  WEB AUDIO SOUND MANAGER - BGM & Synthesized Sound Effects
+// ============================================================
+//  WEB AUDIO SOUND MANAGER - Super Mario BGM & Sound Effects
 // ============================================================
 class SoundManager {
     constructor() {
@@ -50,14 +51,16 @@ class SoundManager {
         this.bgmGain = null;
         this.sfxGain = null;
         
-        // BGM Sequencer state
+        // Super Mario BGM Sequencer state
         this.bgmPlaying = false;
         this.bgmTimer = null;
         this.bgmStep = 0;
         this.nextNoteTime = 0;
-        this.bgmTempo = 134; // Upbeat tempo
+        this.stepDuration = 0.088; // 16th note step duration
         
         this.initEventListeners();
+        // Update UI initially on next tick after DOM is ready
+        setTimeout(() => this.updateMuteUI(), 0);
     }
     
     init() {
@@ -80,12 +83,12 @@ class SoundManager {
             
             // BGM Gain
             this.bgmGain = this.ctx.createGain();
-            this.bgmGain.gain.setValueAtTime(0.32, this.ctx.currentTime);
+            this.bgmGain.gain.setValueAtTime(0.26, this.ctx.currentTime);
             this.bgmGain.connect(this.masterGain);
             
             // SFX Gain
             this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.setValueAtTime(0.55, this.ctx.currentTime);
+            this.sfxGain.gain.setValueAtTime(0.50, this.ctx.currentTime);
             this.sfxGain.connect(this.masterGain);
             
             this.updateMuteUI();
@@ -95,19 +98,53 @@ class SoundManager {
     }
     
     initEventListeners() {
-        // Automatically unlock AudioContext and start intro BGM on first user interaction
+        // Automatically unlock AudioContext and start BGM on first user interaction
         const unlock = () => {
             this.init();
             if (this.ctx && this.ctx.state === 'suspended') {
                 this.ctx.resume();
             }
-            if (menuAnimRunning && !this.bgmPlaying) {
-                this.startMenuBGM();
+            if ((menuAnimRunning || gameRunning) && !this.bgmPlaying && !this.muted) {
+                this.startBGM();
             }
         };
         ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(evt => {
             window.addEventListener(evt, unlock, { once: false, passive: true });
         });
+    }
+    
+    playJump() {
+        if (!this.ctx || this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(450, now + 0.12);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.14);
+    }
+    
+    playBounce() {
+        if (!this.ctx || this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(680, now + 0.16);
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.2);
     }
     
     playStomp() {
@@ -118,12 +155,12 @@ class SoundManager {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(350, now);
-        osc.frequency.exponentialRampToValueAtTime(90, now + 0.12);
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
         
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.setValueAtTime(900, now);
         filter.frequency.exponentialRampToValueAtTime(200, now + 0.12);
         
         gain.gain.setValueAtTime(0.32, now);
@@ -137,35 +174,78 @@ class SoundManager {
         osc.stop(now + 0.15);
     }
     
-    playDeath() {
+    // ---- NORMAL DEATH SOUND (For 1st and 2nd lives) ----
+    playNormalDeath() {
         if (!this.ctx || this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
         
-        // ---- SUPER MARIO BROS RETRO DEATH & GAME OVER JINGLE ----
-        // Authentic frequencies for Lead, Harmony, and Bass channels
+        // Snappy retro pitch-slide fall + soft impact (~0.4s)
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.28);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1600, now);
+        filter.frequency.exponentialRampToValueAtTime(300, now + 0.28);
+        
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        
+        osc.start(now);
+        osc.stop(now + 0.35);
+        
+        // Low sub-thud
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(110, now + 0.2);
+        subOsc.frequency.exponentialRampToValueAtTime(45, now + 0.38);
+        subGain.gain.setValueAtTime(0.35, now + 0.2);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        subOsc.connect(subGain);
+        subGain.connect(this.sfxGain);
+        subOsc.start(now + 0.2);
+        subOsc.stop(now + 0.42);
+    }
+    
+    // ---- SUPER MARIO BROS RETRO DEATH & GAME OVER JINGLE (For 3rd death) ----
+    playMarioDeath() {
+        if (!this.ctx || this.muted) return;
+        this.init();
+        this.stopBGM();
+        const now = this.ctx.currentTime;
+        
+        // Authentic Super Mario Bros NES Death Jingle notes & harmony
         const B4 = 493.88, G4 = 392.00;
         const F5 = 698.46, D5 = 587.33;
         const E5 = 659.25, C5 = 523.25;
         const E4 = 329.63, G3 = 196.00, C4 = 261.63, E3 = 164.81, D3 = 146.83, C3 = 130.81, G2 = 98.00, C2 = 65.41;
         
-        // Sequence format: [delaySeconds, noteDuration, [frequencies], gain]
         const notes = [
             // 1. Initial jump: B4 + G4
-            [0.00, 0.11, [B4, G4], 0.32],
+            [0.00, 0.11, [B4, G4], 0.34],
             // 2. High leap: F5 + D5
-            [0.18, 0.14, [F5, D5], 0.34],
+            [0.18, 0.14, [F5, D5], 0.36],
             // 3. Iconic descending triplet run: F5, F5, E5, D5, C5
-            [0.42, 0.11, [F5, D5], 0.32],
-            [0.54, 0.11, [F5, D5], 0.32],
-            [0.66, 0.11, [E5, C5], 0.32],
-            [0.78, 0.11, [D5, B4], 0.32],
-            [0.90, 0.22, [C5, G4, C3], 0.35],
-            // 4. Cadence resolution: E4, C4, G3, final C4 chord
-            [1.20, 0.12, [E4, G3], 0.28],
-            [1.36, 0.15, [C4, E3], 0.30],
-            [1.54, 0.18, [G3, D3, G2], 0.32],
-            [1.76, 0.65, [C4, G3, E3, C2], 0.36] // Final rich C-major chord
+            [0.42, 0.11, [F5, D5], 0.34],
+            [0.54, 0.11, [F5, D5], 0.34],
+            [0.66, 0.11, [E5, C5], 0.34],
+            [0.78, 0.11, [D5, B4], 0.34],
+            [0.90, 0.24, [C5, G4, C3], 0.38],
+            // 4. Cadence resolution: E4, C4, G3, final C chord
+            [1.20, 0.12, [E4, G3], 0.30],
+            [1.36, 0.15, [C4, E3], 0.32],
+            [1.54, 0.18, [G3, D3, G2], 0.34],
+            [1.76, 0.70, [C4, G3, E3, C2], 0.40]
         ];
         
         notes.forEach(([delay, dur, freqs, vol]) => {
@@ -177,12 +257,11 @@ class SoundManager {
                 const gain = this.ctx.createGain();
                 const filter = this.ctx.createBiquadFilter();
                 
-                // NES style: Square pulse for lead & harmony, Triangle for low bass
                 osc.type = (freq < 150) ? 'triangle' : 'square';
                 osc.frequency.setValueAtTime(freq, startTime);
                 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(3400, startTime);
+                filter.frequency.setValueAtTime(3200, startTime);
                 
                 const voiceVol = (idx === 0 ? vol : vol * 0.65);
                 gain.gain.setValueAtTime(0.001, startTime);
@@ -205,13 +284,13 @@ class SoundManager {
         this.init();
         const now = this.ctx.currentTime;
         
-        // 2-tone bright bell chime
+        // 2-tone bright Mario coin bell chime (B5 -> E6)
         const playTone = (freq, delay) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            osc.type = 'triangle';
+            osc.type = 'square';
             osc.frequency.setValueAtTime(freq, now + delay);
-            gain.gain.setValueAtTime(0.28, now + delay);
+            gain.gain.setValueAtTime(0.24, now + delay);
             gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.22);
             osc.connect(gain);
             gain.connect(this.sfxGain);
@@ -219,7 +298,7 @@ class SoundManager {
             osc.stop(now + delay + 0.24);
         };
         playTone(987.77, 0);     // B5
-        playTone(1318.51, 0.08); // E6
+        playTone(1318.51, 0.07); // E6
     }
     
     playWin() {
@@ -241,8 +320,10 @@ class SoundManager {
         });
     }
     
-    // ---- HOME SCREEN INTRO BGM ----
-    startMenuBGM() {
+    // ============================================================
+    //  SUPER MARIO BROS OVERWORLD BGM (NES Synthesizer)
+    // ============================================================
+    startBGM() {
         this.init();
         if (this.bgmPlaying || !this.ctx) return;
         this.bgmPlaying = true;
@@ -251,7 +332,11 @@ class SoundManager {
         this.scheduleBGM();
     }
     
-    stopMenuBGM() {
+    startMenuBGM() {
+        this.startBGM();
+    }
+    
+    stopBGM() {
         this.bgmPlaying = false;
         if (this.bgmTimer) {
             clearTimeout(this.bgmTimer);
@@ -259,120 +344,169 @@ class SoundManager {
         }
     }
     
+    stopMenuBGM() {
+        this.stopBGM();
+    }
+    
     scheduleBGM() {
         if (!this.bgmPlaying || !this.ctx) return;
         
-        const secondsPerStep = (60 / this.bgmTempo) / 2; // 8th notes
+        // Frequencies in Hz with full enharmonic support (Sharps & Flats)
+        const G2 = 98.00, Ab2 = 103.83, A2 = 110.00, Bb2 = 116.54, B2 = 123.47;
+        const C3 = 130.81, Db3 = 138.59, D3 = 146.83, Eb3 = 155.56, Ds3 = 155.56, E3 = 164.81, F3 = 174.61, Fs3 = 185.00, Gb3 = 185.00, G3 = 196.00, Gs3 = 207.65, Ab3 = 207.65, A3 = 220.00, Bb3 = 233.08, As3 = 233.08, B3 = 246.94;
+        const C4 = 261.63, Db4 = 277.18, Cs4 = 277.18, D4 = 293.66, Eb4 = 311.13, Ds4 = 311.13, E4 = 329.63, F4 = 349.23, Fs4 = 369.99, Gb4 = 369.99, G4 = 392.00, Gs4 = 415.30, Ab4 = 415.30, A4 = 440.00, Bb4 = 466.16, As4 = 466.16, B4 = 493.88;
+        const C5 = 523.25, Db5 = 554.37, Cs5 = 554.37, D5 = 587.33, Eb5 = 622.25, Ds5 = 622.25, E5 = 659.25, F5 = 698.46, Fs5 = 739.99, Gb5 = 739.99, G5 = 783.99, Gs5 = 830.61, Ab5 = 830.61, A5 = 880.00, Bb5 = 932.33, As5 = 932.33, B5 = 987.77;
+        const C6 = 1046.50, D6 = 1174.66, E6 = 1318.51;
         
-        // Notes in Hz
-        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, B4=493.88;
-        const C5=523.25, D5=587.33, E5=659.25, F5=698.46, G5=783.99, A5=880.00, B5=987.77, C6=1046.50;
-        const C3=130.81, D3=146.83, E3=164.81, F3=174.61, G3=196.00, A3=220.00, B3=246.94;
-        
+        // 144 steps total = Intro (16) + Theme A (32) + Theme A (32) + Bridge 1 (32) + Bridge 2 (32)
         const leadPattern = [
-            C5, E5, G5, C6,  B5, G5, E5, G5,
-            A5, 0,  F5, A5,  G5, E5, C5, 0,
-            D5, E5, F5, A5,  G5, F5, E5, D5,
-            C5, E5, G5, B5,  C6, 0,  0,  0
+            // Intro (16)
+            E5, E5, 0, E5, 0, C5, E5, 0, G5, 0, 0, 0, G4, 0, 0, 0,
+            // Main Theme A1 (32)
+            C5, 0, 0, G4, 0, 0, E4, 0, 0, A4, 0, B4, 0, Bb4, A4, 0,
+            G4, E5, G5, A5, 0, F5, G5, 0, E5, 0, C5, D5, B4, 0, 0, 0,
+            // Main Theme A2 (32)
+            C5, 0, 0, G4, 0, 0, E4, 0, 0, A4, 0, B4, 0, Bb4, A4, 0,
+            G4, E5, G5, A5, 0, F5, G5, 0, E5, 0, C5, D5, B4, 0, 0, 0,
+            // Bridge Part 1 (32)
+            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, Gs4, A4, C5, 0, A4, C5, D5,
+            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, C6, 0, C6, C6, 0, 0, 0,
+            // Bridge Part 2 (32)
+            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, Gs4, A4, C5, 0, A4, C5, D5,
+            0, 0, Eb5, 0, 0, D5, 0, 0, C5, 0, 0, 0, 0, 0, 0, 0
+        ];
+        
+        const harmPattern = [
+            // Intro (16)
+            Fs4, Fs4, 0, Fs4, 0, D4, Fs4, 0, B4, 0, 0, 0, G3, 0, 0, 0,
+            // Main Theme A1 (32)
+            E4, 0, 0, C4, 0, 0, G3, 0, 0, C4, 0, D4, 0, Db4, C4, 0,
+            C4, G4, B4, C5, 0, A4, B4, 0, G4, 0, E4, F4, D4, 0, 0, 0,
+            // Main Theme A2 (32)
+            E4, 0, 0, C4, 0, 0, G3, 0, 0, C4, 0, D4, 0, Db4, C4, 0,
+            C4, G4, B4, C5, 0, A4, B4, 0, G4, 0, E4, F4, D4, 0, 0, 0,
+            // Bridge Part 1 (32)
+            0, 0, E5, Eb5, D5, B4, 0, C5, 0, E4, F4, A4, 0, F4, A4, B4,
+            0, 0, E5, Eb5, D5, B4, 0, C5, 0, G5, 0, G5, G5, 0, 0, 0,
+            // Bridge Part 2 (32)
+            0, 0, E5, Eb5, D5, B4, 0, C5, 0, E4, F4, A4, 0, F4, A4, B4,
+            0, 0, Ab4, 0, 0, F4, 0, 0, E4, 0, 0, 0, 0, 0, 0, 0
         ];
         
         const bassPattern = [
-            C3, 0,  G3, 0,   E3, 0,  G3, 0,
-            F3, 0,  C3, 0,   C3, 0,  E3, 0,
-            D3, 0,  A3, 0,   G3, 0,  B3, 0,
-            C3, 0,  G3, 0,   C3, G3, C4, 0
+            // Intro (16)
+            D3, D3, 0, D3, 0, D3, D3, 0, G3, 0, 0, 0, G2, 0, 0, 0,
+            // Main Theme A1 (32)
+            G3, 0, 0, E3, 0, 0, C3, 0, 0, F3, 0, G3, 0, Fs3, F3, 0,
+            E3, C4, E4, F4, 0, D4, E4, 0, C4, 0, A3, B3, G3, 0, 0, 0,
+            // Main Theme A2 (32)
+            G3, 0, 0, E3, 0, 0, C3, 0, 0, F3, 0, G3, 0, Fs3, F3, 0,
+            E3, C4, E4, F4, 0, D4, E4, 0, C4, 0, A3, B3, G3, 0, 0, 0,
+            // Bridge Part 1 (32)
+            C3, 0, 0, C3, 0, 0, C3, 0, F3, 0, 0, F3, 0, 0, F3, 0,
+            C3, 0, 0, C3, 0, 0, C3, 0, G3, 0, 0, G3, 0, G3, C3, 0,
+            // Bridge Part 2 (32)
+            C3, 0, 0, C3, 0, 0, C3, 0, F3, 0, 0, F3, 0, 0, F3, 0,
+            Ab3, 0, 0, Ab3, Bb3, 0, Bb3, 0, C4, 0, 0, G3, C3, 0, 0, 0
         ];
         
-        const padPattern = [
-            E4, G4, E4, G4,  D4, G4, D4, G4,
-            C4, F4, C4, F4,  C4, E4, C4, E4,
-            D4, F4, D4, F4,  D4, G4, D4, G4,
-            E4, G4, E4, G4,  E4, G4, C5, 0
-        ];
+        const totalSteps = leadPattern.length;
         
         while (this.nextNoteTime < this.ctx.currentTime + 0.25) {
-            const step = this.bgmStep % 32;
+            const step = this.bgmStep % totalSteps;
             const time = this.nextNoteTime;
+            const stepDur = this.stepDuration;
             
-            // Lead melody
+            // 1. Lead Melody (Square Wave)
             const leadFreq = leadPattern[step];
             if (leadFreq > 0 && !this.muted) {
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const filter = this.ctx.createBiquadFilter();
                 
-                osc.type = 'triangle';
+                osc.type = 'square';
                 osc.frequency.setValueAtTime(leadFreq, time);
                 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(2200, time);
-                filter.frequency.exponentialRampToValueAtTime(700, time + secondsPerStep * 0.9);
+                filter.frequency.setValueAtTime(2600, time);
                 
-                gain.gain.setValueAtTime(0.22, time);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.85);
+                gain.gain.setValueAtTime(0.18, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.85);
                 
                 osc.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.bgmGain);
                 
                 osc.start(time);
-                osc.stop(time + secondsPerStep * 0.9);
+                osc.stop(time + stepDur * 0.9);
             }
             
-            // Bassline
+            // 2. Harmony Voice (Square Wave)
+            const harmFreq = harmPattern[step];
+            if (harmFreq > 0 && !this.muted) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(harmFreq, time);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2200, time);
+                
+                gain.gain.setValueAtTime(0.11, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.82);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.bgmGain);
+                
+                osc.start(time);
+                osc.stop(time + stepDur * 0.88);
+            }
+            
+            // 3. Triangle Bassline
             const bassFreq = bassPattern[step];
             if (bassFreq > 0 && !this.muted) {
                 const bassOsc = this.ctx.createOscillator();
                 const bassGain = this.ctx.createGain();
-                bassOsc.type = 'sine';
+                bassOsc.type = 'triangle';
                 bassOsc.frequency.setValueAtTime(bassFreq, time);
                 bassGain.gain.setValueAtTime(0.28, time);
-                bassGain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.9);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.95);
                 bassOsc.connect(bassGain);
                 bassGain.connect(this.bgmGain);
                 bassOsc.start(time);
-                bassOsc.stop(time + secondsPerStep * 0.95);
+                bassOsc.stop(time + stepDur * 0.98);
             }
             
-            // Soft chord arp
-            const padFreq = padPattern[step];
-            if (padFreq > 0 && step % 2 === 1 && !this.muted) {
-                const padOsc = this.ctx.createOscillator();
-                const padGain = this.ctx.createGain();
-                padOsc.type = 'sine';
-                padOsc.frequency.setValueAtTime(padFreq, time);
-                padGain.gain.setValueAtTime(0.08, time);
-                padGain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.8);
-                padOsc.connect(padGain);
-                padGain.connect(this.bgmGain);
-                padOsc.start(time);
-                padOsc.stop(time + secondsPerStep * 0.85);
-            }
-            
-            // Subtle rhythmic shaker
-            if (step % 2 === 0 && !this.muted) {
-                const noiseBuf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.04), this.ctx.sampleRate);
+            // 4. NES Rhythmic Noise Percussion (Hi-Hat / Snare)
+            if (!this.muted && (step % 2 === 0 || step % 4 === 2)) {
+                const isSnare = (step % 4 === 2);
+                const noiseBuf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * (isSnare ? 0.05 : 0.025)), this.ctx.sampleRate);
                 const nd = noiseBuf.getChannelData(0);
-                for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.15;
+                for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (isSnare ? 0.22 : 0.12);
+                
                 const pSource = this.ctx.createBufferSource();
                 pSource.buffer = noiseBuf;
                 const pFilter = this.ctx.createBiquadFilter();
-                pFilter.type = 'highpass';
-                pFilter.frequency.setValueAtTime(step % 4 === 2 ? 4000 : 7000, time);
+                pFilter.type = isSnare ? 'bandpass' : 'highpass';
+                pFilter.frequency.setValueAtTime(isSnare ? 1800 : 6500, time);
                 const pGain = this.ctx.createGain();
-                pGain.gain.setValueAtTime(step % 4 === 2 ? 0.12 : 0.06, time);
-                pGain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
+                pGain.gain.setValueAtTime(isSnare ? 0.14 : 0.07, time);
+                pGain.gain.exponentialRampToValueAtTime(0.001, time + (isSnare ? 0.045 : 0.02));
+                
                 pSource.connect(pFilter);
                 pFilter.connect(pGain);
                 pGain.connect(this.bgmGain);
                 pSource.start(time);
             }
             
-            this.nextNoteTime += secondsPerStep;
+            this.nextNoteTime += stepDur;
             this.bgmStep++;
         }
         
-        this.bgmTimer = setTimeout(() => this.scheduleBGM(), 100);
+        this.bgmTimer = setTimeout(() => this.scheduleBGM(), 80);
     }
     
     toggleMute() {
@@ -382,8 +516,13 @@ class SoundManager {
         if (this.masterGain && this.ctx) {
             this.masterGain.gain.setValueAtTime(this.muted ? 0 : 1, this.ctx.currentTime);
         }
-        if (this.muted) {
-            this.stopRoll();
+        if (!this.muted) {
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+            if ((menuAnimRunning || gameRunning) && !this.bgmPlaying) {
+                this.startBGM();
+            }
         }
         this.updateMuteUI();
         return this.muted;
@@ -974,6 +1113,7 @@ function updatePlayer(dt) {
     if ((keys['ArrowUp'] || keys['w'] || keys[' ']) && player.onGround) {
         player.vy = JUMP_VEL;
         player.onGround = false;
+        soundManager.playJump();
     }
     player.vy += GRAVITY * dt;
     player.x += player.vx * dt; player.y += player.vy * dt;
@@ -1029,6 +1169,7 @@ function updatePlayer(dt) {
     bouncePads.forEach(b => {
         if (circleRectCollision(player.x, player.y, player.radius, b.x, b.y - 2, b.w, 18) && player.vy > 0) {
             player.vy = JUMP_VEL * 1.3; player.onGround = false; b.anim = 1; spawnParticles(b.x + b.w / 2, b.y, '#FF5722', 5);
+            soundManager.playBounce();
         }
     });
 
@@ -1043,11 +1184,21 @@ function updatePlayer(dt) {
 }
 
 function playerDie() {
-    if (player.dead) return; player.dead = true; lives--;
-    soundManager.playDeath();
-    spawnParticles(player.x, player.y, '#E63946', 15);
-    if (lives <= 0) setTimeout(showGameOver, 1800);
-    else setTimeout(function() { initLevel(currentLevel); }, 2200);
+    if (player.dead) return;
+    player.dead = true;
+    lives--;
+    
+    if (lives <= 0) {
+        // 3rd death -> Game Over! Play Super Mario Death Jingle & open Game Over panel
+        soundManager.playMarioDeath();
+        spawnParticles(player.x, player.y, '#E63946', 20);
+        setTimeout(showGameOver, 1800);
+    } else {
+        // 1st or 2nd death -> Normal death sound for normal lives
+        soundManager.playNormalDeath();
+        spawnParticles(player.x, player.y, '#E63946', 15);
+        setTimeout(function() { initLevel(currentLevel); }, 1400);
+    }
 }
 function updateEnemies(dt) {
     enemyObjects = enemyObjects.filter(function(e) { return !e.dead; });
@@ -1098,6 +1249,7 @@ function restartFromGameOver() {
     score = 0;
     currentLevel = 0;
     initLevel(0);
+    soundManager.startBGM();
     gameRunning = true;
     gamePaused = false;
     document.getElementById('hudButtons').classList.add('active');
@@ -1179,10 +1331,12 @@ function togglePause() {
     gamePaused = !gamePaused;
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (gamePaused) {
+        soundManager.stopBGM();
         document.getElementById('pauseLevelInfo').textContent =
             LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)  •  Score: ' + score;
         pauseOverlay.classList.add('show');
     } else {
+        soundManager.startBGM();
         pauseOverlay.classList.remove('show');
         lastFrameTime = performance.now();
     }
@@ -1192,11 +1346,8 @@ function togglePause() {
 const btnMute = document.getElementById('btnMute');
 if (btnMute) {
     btnMute.addEventListener('click', function(e) {
+        e.preventDefault();
         e.stopPropagation();
-        soundManager.toggleMute();
-    });
-    btnMute.addEventListener('touchend', function(e) {
-        e.preventDefault(); e.stopPropagation();
         soundManager.toggleMute();
     });
 }
@@ -1205,6 +1356,7 @@ if (btnMute) {
 const btnSoundMenu = document.getElementById('btnSoundMenu');
 if (btnSoundMenu) {
     btnSoundMenu.addEventListener('click', function(e) {
+        e.preventDefault();
         e.stopPropagation();
         soundManager.toggleMute();
     });
@@ -1234,6 +1386,7 @@ document.getElementById('btnHome').addEventListener('touchend', function(e) {
 // Resume
 document.getElementById('btnResume').addEventListener('click', function() {
     gamePaused = false;
+    soundManager.startBGM();
     document.getElementById('pauseOverlay').classList.remove('show');
     lastFrameTime = performance.now();
 });
@@ -1241,6 +1394,7 @@ document.getElementById('btnResume').addEventListener('click', function() {
 // Restart Level
 document.getElementById('btnRestart').addEventListener('click', function() {
     gamePaused = false;
+    soundManager.startBGM();
     document.getElementById('pauseOverlay').classList.remove('show');
     initLevel(currentLevel);
     lastFrameTime = performance.now();
@@ -1592,6 +1746,7 @@ document.getElementById('playBtn').addEventListener('click', function() {
     soundManager.init();
     hideGameOverOverlay();
     stopMenuAnimation();
+    soundManager.startBGM();
     document.getElementById('mainMenu').classList.add('hidden');
     lives = 3; score = 0; currentLevel = 0; initLevel(0);
     gameRunning = true; gamePaused = false;
