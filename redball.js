@@ -43,6 +43,8 @@ window.addEventListener('keyup', e => { keys[e.key] = false; });
 // ============================================================
 //  WEB AUDIO SOUND MANAGER - Super Mario BGM & Sound Effects
 // ============================================================
+//  WEB AUDIO SOUND MANAGER - Original Home BGM & SFX
+// ============================================================
 class SoundManager {
     constructor() {
         this.ctx = null;
@@ -51,12 +53,12 @@ class SoundManager {
         this.bgmGain = null;
         this.sfxGain = null;
         
-        // Super Mario BGM Sequencer state
+        // Home Screen BGM Sequencer state
         this.bgmPlaying = false;
         this.bgmTimer = null;
         this.bgmStep = 0;
         this.nextNoteTime = 0;
-        this.stepDuration = 0.088; // 16th note step duration
+        this.bgmTempo = 134; // Upbeat tempo
         
         this.initEventListeners();
         // Update UI initially on next tick after DOM is ready
@@ -83,12 +85,12 @@ class SoundManager {
             
             // BGM Gain
             this.bgmGain = this.ctx.createGain();
-            this.bgmGain.gain.setValueAtTime(0.26, this.ctx.currentTime);
+            this.bgmGain.gain.setValueAtTime(0.30, this.ctx.currentTime);
             this.bgmGain.connect(this.masterGain);
             
             // SFX Gain
             this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.setValueAtTime(0.50, this.ctx.currentTime);
+            this.sfxGain.gain.setValueAtTime(0.52, this.ctx.currentTime);
             this.sfxGain.connect(this.masterGain);
             
             this.updateMuteUI();
@@ -98,14 +100,14 @@ class SoundManager {
     }
     
     initEventListeners() {
-        // Automatically unlock AudioContext and start BGM on first user interaction
+        // Automatically unlock AudioContext and start intro BGM on first user interaction on the home screen
         const unlock = () => {
             this.init();
             if (this.ctx && this.ctx.state === 'suspended') {
                 this.ctx.resume();
             }
-            if ((menuAnimRunning || gameRunning) && !this.bgmPlaying && !this.muted) {
-                this.startBGM();
+            if (menuAnimRunning && !this.bgmPlaying && !this.muted) {
+                this.startMenuBGM();
             }
         };
         ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(evt => {
@@ -320,23 +322,17 @@ class SoundManager {
         });
     }
     
-    // ============================================================
-    //  SUPER MARIO BROS OVERWORLD BGM (NES Synthesizer)
-    // ============================================================
-    startBGM() {
+    // ---- HOME SCREEN INTRO BGM (Original) ----
+    startMenuBGM() {
         this.init();
         if (this.bgmPlaying || !this.ctx) return;
         this.bgmPlaying = true;
         this.bgmStep = 0;
         this.nextNoteTime = this.ctx.currentTime + 0.05;
-        this.scheduleBGM();
+        this.scheduleMenuBGM();
     }
     
-    startMenuBGM() {
-        this.startBGM();
-    }
-    
-    stopBGM() {
+    stopMenuBGM() {
         this.bgmPlaying = false;
         if (this.bgmTimer) {
             clearTimeout(this.bgmTimer);
@@ -344,169 +340,124 @@ class SoundManager {
         }
     }
     
-    stopMenuBGM() {
-        this.stopBGM();
+    stopBGM() {
+        this.stopMenuBGM();
     }
     
-    scheduleBGM() {
+    scheduleMenuBGM() {
         if (!this.bgmPlaying || !this.ctx) return;
         
-        // Frequencies in Hz with full enharmonic support (Sharps & Flats)
-        const G2 = 98.00, Ab2 = 103.83, A2 = 110.00, Bb2 = 116.54, B2 = 123.47;
-        const C3 = 130.81, Db3 = 138.59, D3 = 146.83, Eb3 = 155.56, Ds3 = 155.56, E3 = 164.81, F3 = 174.61, Fs3 = 185.00, Gb3 = 185.00, G3 = 196.00, Gs3 = 207.65, Ab3 = 207.65, A3 = 220.00, Bb3 = 233.08, As3 = 233.08, B3 = 246.94;
-        const C4 = 261.63, Db4 = 277.18, Cs4 = 277.18, D4 = 293.66, Eb4 = 311.13, Ds4 = 311.13, E4 = 329.63, F4 = 349.23, Fs4 = 369.99, Gb4 = 369.99, G4 = 392.00, Gs4 = 415.30, Ab4 = 415.30, A4 = 440.00, Bb4 = 466.16, As4 = 466.16, B4 = 493.88;
-        const C5 = 523.25, Db5 = 554.37, Cs5 = 554.37, D5 = 587.33, Eb5 = 622.25, Ds5 = 622.25, E5 = 659.25, F5 = 698.46, Fs5 = 739.99, Gb5 = 739.99, G5 = 783.99, Gs5 = 830.61, Ab5 = 830.61, A5 = 880.00, Bb5 = 932.33, As5 = 932.33, B5 = 987.77;
-        const C6 = 1046.50, D6 = 1174.66, E6 = 1318.51;
+        const secondsPerStep = (60 / this.bgmTempo) / 2; // 8th notes
         
-        // 144 steps total = Intro (16) + Theme A (32) + Theme A (32) + Bridge 1 (32) + Bridge 2 (32)
+        // Notes in Hz
+        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, B4=493.88;
+        const C5=523.25, D5=587.33, E5=659.25, F5=698.46, G5=783.99, A5=880.00, B5=987.77, C6=1046.50;
+        const C3=130.81, D3=146.83, E3=164.81, F3=174.61, G3=196.00, A3=220.00, B3=246.94;
+        
         const leadPattern = [
-            // Intro (16)
-            E5, E5, 0, E5, 0, C5, E5, 0, G5, 0, 0, 0, G4, 0, 0, 0,
-            // Main Theme A1 (32)
-            C5, 0, 0, G4, 0, 0, E4, 0, 0, A4, 0, B4, 0, Bb4, A4, 0,
-            G4, E5, G5, A5, 0, F5, G5, 0, E5, 0, C5, D5, B4, 0, 0, 0,
-            // Main Theme A2 (32)
-            C5, 0, 0, G4, 0, 0, E4, 0, 0, A4, 0, B4, 0, Bb4, A4, 0,
-            G4, E5, G5, A5, 0, F5, G5, 0, E5, 0, C5, D5, B4, 0, 0, 0,
-            // Bridge Part 1 (32)
-            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, Gs4, A4, C5, 0, A4, C5, D5,
-            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, C6, 0, C6, C6, 0, 0, 0,
-            // Bridge Part 2 (32)
-            0, 0, G5, Fs5, F5, Eb5, 0, E5, 0, Gs4, A4, C5, 0, A4, C5, D5,
-            0, 0, Eb5, 0, 0, D5, 0, 0, C5, 0, 0, 0, 0, 0, 0, 0
-        ];
-        
-        const harmPattern = [
-            // Intro (16)
-            Fs4, Fs4, 0, Fs4, 0, D4, Fs4, 0, B4, 0, 0, 0, G3, 0, 0, 0,
-            // Main Theme A1 (32)
-            E4, 0, 0, C4, 0, 0, G3, 0, 0, C4, 0, D4, 0, Db4, C4, 0,
-            C4, G4, B4, C5, 0, A4, B4, 0, G4, 0, E4, F4, D4, 0, 0, 0,
-            // Main Theme A2 (32)
-            E4, 0, 0, C4, 0, 0, G3, 0, 0, C4, 0, D4, 0, Db4, C4, 0,
-            C4, G4, B4, C5, 0, A4, B4, 0, G4, 0, E4, F4, D4, 0, 0, 0,
-            // Bridge Part 1 (32)
-            0, 0, E5, Eb5, D5, B4, 0, C5, 0, E4, F4, A4, 0, F4, A4, B4,
-            0, 0, E5, Eb5, D5, B4, 0, C5, 0, G5, 0, G5, G5, 0, 0, 0,
-            // Bridge Part 2 (32)
-            0, 0, E5, Eb5, D5, B4, 0, C5, 0, E4, F4, A4, 0, F4, A4, B4,
-            0, 0, Ab4, 0, 0, F4, 0, 0, E4, 0, 0, 0, 0, 0, 0, 0
+            C5, E5, G5, C6,  B5, G5, E5, G5,
+            A5, 0,  F5, A5,  G5, E5, C5, 0,
+            D5, E5, F5, A5,  G5, F5, E5, D5,
+            C5, E5, G5, B5,  C6, 0,  0,  0
         ];
         
         const bassPattern = [
-            // Intro (16)
-            D3, D3, 0, D3, 0, D3, D3, 0, G3, 0, 0, 0, G2, 0, 0, 0,
-            // Main Theme A1 (32)
-            G3, 0, 0, E3, 0, 0, C3, 0, 0, F3, 0, G3, 0, Fs3, F3, 0,
-            E3, C4, E4, F4, 0, D4, E4, 0, C4, 0, A3, B3, G3, 0, 0, 0,
-            // Main Theme A2 (32)
-            G3, 0, 0, E3, 0, 0, C3, 0, 0, F3, 0, G3, 0, Fs3, F3, 0,
-            E3, C4, E4, F4, 0, D4, E4, 0, C4, 0, A3, B3, G3, 0, 0, 0,
-            // Bridge Part 1 (32)
-            C3, 0, 0, C3, 0, 0, C3, 0, F3, 0, 0, F3, 0, 0, F3, 0,
-            C3, 0, 0, C3, 0, 0, C3, 0, G3, 0, 0, G3, 0, G3, C3, 0,
-            // Bridge Part 2 (32)
-            C3, 0, 0, C3, 0, 0, C3, 0, F3, 0, 0, F3, 0, 0, F3, 0,
-            Ab3, 0, 0, Ab3, Bb3, 0, Bb3, 0, C4, 0, 0, G3, C3, 0, 0, 0
+            C3, 0,  G3, 0,   E3, 0,  G3, 0,
+            F3, 0,  C3, 0,   C3, 0,  E3, 0,
+            D3, 0,  A3, 0,   G3, 0,  B3, 0,
+            C3, 0,  G3, 0,   C3, G3, C4, 0
         ];
         
-        const totalSteps = leadPattern.length;
+        const padPattern = [
+            E4, G4, E4, G4,  D4, G4, D4, G4,
+            C4, F4, C4, F4,  C4, E4, C4, E4,
+            D4, F4, D4, F4,  D4, G4, D4, G4,
+            E4, G4, E4, G4,  E4, G4, C5, 0
+        ];
         
         while (this.nextNoteTime < this.ctx.currentTime + 0.25) {
-            const step = this.bgmStep % totalSteps;
+            const step = this.bgmStep % 32;
             const time = this.nextNoteTime;
-            const stepDur = this.stepDuration;
             
-            // 1. Lead Melody (Square Wave)
+            // Lead melody
             const leadFreq = leadPattern[step];
             if (leadFreq > 0 && !this.muted) {
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 const filter = this.ctx.createBiquadFilter();
                 
-                osc.type = 'square';
+                osc.type = 'triangle';
                 osc.frequency.setValueAtTime(leadFreq, time);
                 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(2600, time);
-                
-                gain.gain.setValueAtTime(0.18, time);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.85);
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.bgmGain);
-                
-                osc.start(time);
-                osc.stop(time + stepDur * 0.9);
-            }
-            
-            // 2. Harmony Voice (Square Wave)
-            const harmFreq = harmPattern[step];
-            if (harmFreq > 0 && !this.muted) {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                const filter = this.ctx.createBiquadFilter();
-                
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(harmFreq, time);
-                
-                filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(2200, time);
+                filter.frequency.exponentialRampToValueAtTime(700, time + secondsPerStep * 0.9);
                 
-                gain.gain.setValueAtTime(0.11, time);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.82);
+                gain.gain.setValueAtTime(0.22, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.85);
                 
                 osc.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.bgmGain);
                 
                 osc.start(time);
-                osc.stop(time + stepDur * 0.88);
+                osc.stop(time + secondsPerStep * 0.9);
             }
             
-            // 3. Triangle Bassline
+            // Bassline
             const bassFreq = bassPattern[step];
             if (bassFreq > 0 && !this.muted) {
                 const bassOsc = this.ctx.createOscillator();
                 const bassGain = this.ctx.createGain();
-                bassOsc.type = 'triangle';
+                bassOsc.type = 'sine';
                 bassOsc.frequency.setValueAtTime(bassFreq, time);
                 bassGain.gain.setValueAtTime(0.28, time);
-                bassGain.gain.exponentialRampToValueAtTime(0.001, time + stepDur * 0.95);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.9);
                 bassOsc.connect(bassGain);
                 bassGain.connect(this.bgmGain);
                 bassOsc.start(time);
-                bassOsc.stop(time + stepDur * 0.98);
+                bassOsc.stop(time + secondsPerStep * 0.95);
             }
             
-            // 4. NES Rhythmic Noise Percussion (Hi-Hat / Snare)
-            if (!this.muted && (step % 2 === 0 || step % 4 === 2)) {
-                const isSnare = (step % 4 === 2);
-                const noiseBuf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * (isSnare ? 0.05 : 0.025)), this.ctx.sampleRate);
+            // Soft chord arp
+            const padFreq = padPattern[step];
+            if (padFreq > 0 && step % 2 === 1 && !this.muted) {
+                const padOsc = this.ctx.createOscillator();
+                const padGain = this.ctx.createGain();
+                padOsc.type = 'sine';
+                padOsc.frequency.setValueAtTime(padFreq, time);
+                padGain.gain.setValueAtTime(0.08, time);
+                padGain.gain.exponentialRampToValueAtTime(0.001, time + secondsPerStep * 0.8);
+                padOsc.connect(padGain);
+                padGain.connect(this.bgmGain);
+                padOsc.start(time);
+                padOsc.stop(time + secondsPerStep * 0.85);
+            }
+            
+            // Subtle rhythmic shaker
+            if (step % 2 === 0 && !this.muted) {
+                const noiseBuf = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.04), this.ctx.sampleRate);
                 const nd = noiseBuf.getChannelData(0);
-                for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (isSnare ? 0.22 : 0.12);
-                
+                for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.15;
                 const pSource = this.ctx.createBufferSource();
                 pSource.buffer = noiseBuf;
                 const pFilter = this.ctx.createBiquadFilter();
-                pFilter.type = isSnare ? 'bandpass' : 'highpass';
-                pFilter.frequency.setValueAtTime(isSnare ? 1800 : 6500, time);
+                pFilter.type = 'highpass';
+                pFilter.frequency.setValueAtTime(step % 4 === 2 ? 4000 : 7000, time);
                 const pGain = this.ctx.createGain();
-                pGain.gain.setValueAtTime(isSnare ? 0.14 : 0.07, time);
-                pGain.gain.exponentialRampToValueAtTime(0.001, time + (isSnare ? 0.045 : 0.02));
-                
+                pGain.gain.setValueAtTime(step % 4 === 2 ? 0.12 : 0.06, time);
+                pGain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
                 pSource.connect(pFilter);
                 pFilter.connect(pGain);
                 pGain.connect(this.bgmGain);
                 pSource.start(time);
             }
             
-            this.nextNoteTime += stepDur;
+            this.nextNoteTime += secondsPerStep;
             this.bgmStep++;
         }
         
-        this.bgmTimer = setTimeout(() => this.scheduleBGM(), 80);
+        this.bgmTimer = setTimeout(() => this.scheduleMenuBGM(), 100);
     }
     
     toggleMute() {
@@ -520,8 +471,8 @@ class SoundManager {
             if (this.ctx && this.ctx.state === 'suspended') {
                 this.ctx.resume();
             }
-            if ((menuAnimRunning || gameRunning) && !this.bgmPlaying) {
-                this.startBGM();
+            if (menuAnimRunning && !this.bgmPlaying) {
+                this.startMenuBGM();
             }
         }
         this.updateMuteUI();
@@ -1249,7 +1200,6 @@ function restartFromGameOver() {
     score = 0;
     currentLevel = 0;
     initLevel(0);
-    soundManager.startBGM();
     gameRunning = true;
     gamePaused = false;
     document.getElementById('hudButtons').classList.add('active');
@@ -1331,12 +1281,10 @@ function togglePause() {
     gamePaused = !gamePaused;
     const pauseOverlay = document.getElementById('pauseOverlay');
     if (gamePaused) {
-        soundManager.stopBGM();
         document.getElementById('pauseLevelInfo').textContent =
             LEVELS[currentLevel].name + ' (Lv ' + (currentLevel + 1) + '/10)  •  Score: ' + score;
         pauseOverlay.classList.add('show');
     } else {
-        soundManager.startBGM();
         pauseOverlay.classList.remove('show');
         lastFrameTime = performance.now();
     }
@@ -1386,7 +1334,6 @@ document.getElementById('btnHome').addEventListener('touchend', function(e) {
 // Resume
 document.getElementById('btnResume').addEventListener('click', function() {
     gamePaused = false;
-    soundManager.startBGM();
     document.getElementById('pauseOverlay').classList.remove('show');
     lastFrameTime = performance.now();
 });
@@ -1394,7 +1341,6 @@ document.getElementById('btnResume').addEventListener('click', function() {
 // Restart Level
 document.getElementById('btnRestart').addEventListener('click', function() {
     gamePaused = false;
-    soundManager.startBGM();
     document.getElementById('pauseOverlay').classList.remove('show');
     initLevel(currentLevel);
     lastFrameTime = performance.now();
@@ -1746,7 +1692,6 @@ document.getElementById('playBtn').addEventListener('click', function() {
     soundManager.init();
     hideGameOverOverlay();
     stopMenuAnimation();
-    soundManager.startBGM();
     document.getElementById('mainMenu').classList.add('hidden');
     lives = 3; score = 0; currentLevel = 0; initLevel(0);
     gameRunning = true; gamePaused = false;
