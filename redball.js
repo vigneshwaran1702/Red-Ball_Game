@@ -142,60 +142,62 @@ class SoundManager {
         this.init();
         const now = this.ctx.currentTime;
         
-        // 1. Noise crunch
-        const bufferSize = Math.floor(this.ctx.sampleRate * 0.16);
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-        const noiseFilter = this.ctx.createBiquadFilter();
-        noiseFilter.type = 'bandpass';
-        noiseFilter.frequency.setValueAtTime(950, now);
-        noiseFilter.frequency.exponentialRampToValueAtTime(150, now + 0.16);
-        const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.45, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-        noise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.sfxGain);
-        noise.start(now);
+        // ---- SUPER MARIO BROS RETRO DEATH & GAME OVER JINGLE ----
+        // Authentic frequencies for Lead, Harmony, and Bass channels
+        const B4 = 493.88, G4 = 392.00;
+        const F5 = 698.46, D5 = 587.33;
+        const E5 = 659.25, C5 = 523.25;
+        const E4 = 329.63, G3 = 196.00, C4 = 261.63, E3 = 164.81, D3 = 146.83, C3 = 130.81, G2 = 98.00, C2 = 65.41;
         
-        // 2. Descending tone slide
-        const osc = this.ctx.createOscillator();
-        const oscFilter = this.ctx.createBiquadFilter();
-        const oscGain = this.ctx.createGain();
+        // Sequence format: [delaySeconds, noteDuration, [frequencies], gain]
+        const notes = [
+            // 1. Initial jump: B4 + G4
+            [0.00, 0.11, [B4, G4], 0.32],
+            // 2. High leap: F5 + D5
+            [0.18, 0.14, [F5, D5], 0.34],
+            // 3. Iconic descending triplet run: F5, F5, E5, D5, C5
+            [0.42, 0.11, [F5, D5], 0.32],
+            [0.54, 0.11, [F5, D5], 0.32],
+            [0.66, 0.11, [E5, C5], 0.32],
+            [0.78, 0.11, [D5, B4], 0.32],
+            [0.90, 0.22, [C5, G4, C3], 0.35],
+            // 4. Cadence resolution: E4, C4, G3, final C4 chord
+            [1.20, 0.12, [E4, G3], 0.28],
+            [1.36, 0.15, [C4, E3], 0.30],
+            [1.54, 0.18, [G3, D3, G2], 0.32],
+            [1.76, 0.65, [C4, G3, E3, C2], 0.36] // Final rich C-major chord
+        ];
         
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(380, now);
-        osc.frequency.exponentialRampToValueAtTime(58, now + 0.55);
-        
-        oscFilter.type = 'lowpass';
-        oscFilter.frequency.setValueAtTime(1200, now);
-        oscFilter.frequency.exponentialRampToValueAtTime(180, now + 0.55);
-        
-        oscGain.gain.setValueAtTime(0.42, now);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.58);
-        
-        osc.connect(oscFilter);
-        oscFilter.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        
-        osc.start(now);
-        osc.stop(now + 0.6);
-        
-        // 3. Sub boom
-        const sub = this.ctx.createOscillator();
-        const subGain = this.ctx.createGain();
-        sub.type = 'sine';
-        sub.frequency.setValueAtTime(90, now);
-        sub.frequency.exponentialRampToValueAtTime(30, now + 0.4);
-        subGain.gain.setValueAtTime(0.5, now);
-        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-        sub.connect(subGain);
-        subGain.connect(this.sfxGain);
-        sub.start(now);
-        sub.stop(now + 0.45);
+        notes.forEach(([delay, dur, freqs, vol]) => {
+            const startTime = now + delay;
+            const endTime = startTime + dur;
+            
+            freqs.forEach((freq, idx) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                
+                // NES style: Square pulse for lead & harmony, Triangle for low bass
+                osc.type = (freq < 150) ? 'triangle' : 'square';
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(3400, startTime);
+                
+                const voiceVol = (idx === 0 ? vol : vol * 0.65);
+                gain.gain.setValueAtTime(0.001, startTime);
+                gain.gain.linearRampToValueAtTime(voiceVol, startTime + 0.006);
+                gain.gain.setValueAtTime(voiceVol, endTime - 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.sfxGain);
+                
+                osc.start(startTime);
+                osc.stop(endTime + 0.02);
+            });
+        });
     }
     
     playStar() {
@@ -1044,8 +1046,8 @@ function playerDie() {
     if (player.dead) return; player.dead = true; lives--;
     soundManager.playDeath();
     spawnParticles(player.x, player.y, '#E63946', 15);
-    if (lives <= 0) setTimeout(showGameOver, 600);
-    else setTimeout(function() { initLevel(currentLevel); }, 1000);
+    if (lives <= 0) setTimeout(showGameOver, 1800);
+    else setTimeout(function() { initLevel(currentLevel); }, 2200);
 }
 function updateEnemies(dt) {
     enemyObjects = enemyObjects.filter(function(e) { return !e.dead; });
