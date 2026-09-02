@@ -11,26 +11,28 @@
     <div id="gameContainer">
         <canvas id="game" width="900" height="550"></canvas>
         <div id="mainMenu">
-            <h1>Red Ball</h1>
-            <p>Roll, jump, and collect stars!</p>
-            <button class="menuBtn" id="playBtn">Play</button>
-            <button class="soundMenuBtn" id="btnSoundMenu" title="Toggle Sound">
-                <svg id="menuSoundIconOn" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="soundMenuBtn" id="btnSoundMenu" title="Toggle Sound (M)" aria-label="Toggle Sound">
+                <svg id="menuSoundIconOn" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
                 </svg>
-                <svg id="menuSoundIconOff" class="hidden-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="menuSoundIconOff" class="hidden-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
                     <line x1="23" y1="9" x2="17" y2="15"/>
                     <line x1="17" y1="9" x2="23" y2="15"/>
                 </svg>
                 <span id="menuSoundLabel">Sound: ON</span>
             </button>
+            <div class="mainMenuContent">
+                <h1>Red Ball</h1>
+                <p>Roll, jump, and collect stars!</p>
+                <button class="menuBtn" id="playBtn">Play</button>
+            </div>
         </div>
-        <!-- HUD Buttons (Pause, Home & Sound) -->
+        <!-- HUD Buttons (Sound, Pause & Home) -->
         <div id="hudButtons">
-            <button class="hudBtn" id="btnMute" title="Toggle Sound (M)">
+            <button class="hudBtn" id="btnMute" title="Toggle Sound (M)" aria-label="Toggle Sound">
                 <svg id="hudSoundIconOn" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -42,13 +44,13 @@
                     <line x1="17" y1="9" x2="23" y2="15"/>
                 </svg>
             </button>
-            <button class="hudBtn" id="btnPause" title="Pause (Esc)">
+            <button class="hudBtn" id="btnPause" title="Pause (Esc)" aria-label="Pause Game">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
                     <rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/>
                     <rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>
                 </svg>
             </button>
-            <button class="hudBtn" id="btnHome" title="Home">
+            <button class="hudBtn" id="btnHome" title="Home" aria-label="Main Menu">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
                     <path d="M3 12l9-9 9 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -67,6 +69,19 @@
                 <button class="menuBtn pauseMenuBtn" id="btnRestart">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     Restart Level
+                </button>
+                <button class="menuBtn pauseMenuBtn pauseSoundBtn" id="btnSoundPause">
+                    <svg id="pauseSoundIconOn" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;vertical-align:middle;">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    </svg>
+                    <svg id="pauseSoundIconOff" class="hidden-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;vertical-align:middle;">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/>
+                        <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                    <span id="pauseSoundLabel">Sound: ON</span>
                 </button>
                 <button class="menuBtn pauseMenuBtn" id="btnHomeMenu">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;vertical-align:middle;"><path d="M3 12l9-9 9 9"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>

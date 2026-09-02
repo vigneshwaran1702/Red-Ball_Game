@@ -492,6 +492,8 @@ class SoundManager {
         }
         if (btnMute) {
             btnMute.classList.toggle('muted', isMuted);
+            btnMute.setAttribute('title', isMuted ? 'Unmute Sound (M)' : 'Mute Sound (M)');
+            btnMute.setAttribute('aria-label', isMuted ? 'Unmute Sound' : 'Mute Sound');
         }
         
         // Menu sound button
@@ -508,6 +510,26 @@ class SoundManager {
         }
         if (btnSoundMenu) {
             btnSoundMenu.classList.toggle('muted', isMuted);
+            btnSoundMenu.setAttribute('title', isMuted ? 'Unmute Sound (M)' : 'Mute Sound (M)');
+            btnSoundMenu.setAttribute('aria-label', isMuted ? 'Unmute Sound' : 'Mute Sound');
+        }
+
+        // Pause Menu sound button
+        const pauseOn = document.getElementById('pauseSoundIconOn');
+        const pauseOff = document.getElementById('pauseSoundIconOff');
+        const pauseLabel = document.getElementById('pauseSoundLabel');
+        const btnSoundPause = document.getElementById('btnSoundPause');
+        if (pauseOn && pauseOff) {
+            pauseOn.classList.toggle('hidden-icon', isMuted);
+            pauseOff.classList.toggle('hidden-icon', !isMuted);
+        }
+        if (pauseLabel) {
+            pauseLabel.textContent = isMuted ? 'Sound: OFF' : 'Sound: ON';
+        }
+        if (btnSoundPause) {
+            btnSoundPause.classList.toggle('muted', isMuted);
+            btnSoundPause.setAttribute('title', isMuted ? 'Unmute Sound' : 'Mute Sound');
+            btnSoundPause.setAttribute('aria-label', isMuted ? 'Unmute Sound' : 'Mute Sound');
         }
     }
 }
@@ -1298,12 +1320,37 @@ if (btnMute) {
         e.stopPropagation();
         soundManager.toggleMute();
     });
+    btnMute.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        soundManager.toggleMute();
+    });
 }
 
 // Sound toggle button on Main Menu
 const btnSoundMenu = document.getElementById('btnSoundMenu');
 if (btnSoundMenu) {
     btnSoundMenu.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        soundManager.toggleMute();
+    });
+    btnSoundMenu.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        soundManager.toggleMute();
+    });
+}
+
+// Sound toggle button in Pause Menu
+const btnSoundPause = document.getElementById('btnSoundPause');
+if (btnSoundPause) {
+    btnSoundPause.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        soundManager.toggleMute();
+    });
+    btnSoundPause.addEventListener('touchend', function(e) {
         e.preventDefault();
         e.stopPropagation();
         soundManager.toggleMute();

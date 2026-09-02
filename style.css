@@ -35,6 +35,16 @@ canvas {
     pointer-events: none;
 }
 #mainMenu.hidden { opacity: 0; pointer-events: none; }
+
+.mainMenuContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
 #mainMenu h1 {
     font-size: 68px; font-weight: 900; color: #e63946;
     text-shadow: 3px 3px 0 #a8001a, 0 0 40px rgba(230,57,70,0.5), 0 0 80px rgba(230,57,70,0.2);
@@ -62,42 +72,52 @@ canvas {
 .menuBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8b0000, 0 12px 30px rgba(0,0,0,0.4); }
 .menuBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #8b0000; }
 
+/* ---- Main Menu Sound Button (Top-Right Placed) ---- */
 .soundMenuBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-top: 14px;
-    padding: 10px 22px;
-    font-size: 15px;
+    padding: 9px 18px;
+    font-size: 14px;
     font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #4ade80;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(74, 222, 128, 0.35);
     border-radius: 30px;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: all 0.2s ease;
-    position: relative;
-    z-index: 1;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 105;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 .soundMenuBtn:hover {
-    background: rgba(0, 0, 0, 0.55);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(74, 222, 128, 0.65);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.25), 0 4px 16px rgba(0,0,0,0.4);
 }
 .soundMenuBtn:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.96);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .soundMenuBtn.muted {
-    color: rgba(255, 255, 255, 0.55);
-    border-color: rgba(255, 100, 100, 0.3);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(239, 68, 68, 0.15);
 }
-.hudBtn.muted {
-    color: #ff6b6b;
-    border: 1px solid rgba(255, 107, 107, 0.4);
+.soundMenuBtn.muted:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(248, 113, 113, 0.7);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25), 0 4px 16px rgba(0,0,0,0.4);
 }
 .hidden-icon {
     display: none !important;
@@ -404,11 +424,11 @@ canvas {
     }
 }
 
-/* ---- HUD Buttons (Pause & Home) ---- */
+/* ---- HUD Buttons (Sound, Pause & Home) ---- */
 #hudButtons {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 14px;
+    right: 14px;
     z-index: 80;
     display: none;
     gap: 8px;
@@ -420,12 +440,12 @@ canvas {
 .hudBtn {
     width: 42px;
     height: 42px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: rgba(255, 255, 255, 0.85);
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -434,18 +454,36 @@ canvas {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
-    transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .hudBtn:hover {
-    background: rgba(0, 0, 0, 0.5);
-    transform: scale(1.08);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .hudBtn:active {
-    background: rgba(0, 0, 0, 0.6);
-    transform: scale(0.95);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transform: translateY(1px) scale(0.94);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+#btnMute {
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.35);
+}
+#btnMute:hover {
+    border-color: rgba(74, 222, 128, 0.65);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.25), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+#btnMute.muted {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(239, 68, 68, 0.15);
+}
+#btnMute.muted:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(248, 113, 113, 0.7);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25), 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* ---- Pause Overlay ---- */
@@ -521,6 +559,25 @@ canvas {
 }
 #btnRestart:active {
     box-shadow: 0 2px 0 #E65100 !important;
+}
+#btnSoundPause {
+    background: linear-gradient(180deg, #3B82F6, #1D4ED8) !important;
+    box-shadow: 0 5px 0 #1E3A8A, 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+#btnSoundPause:hover {
+    box-shadow: 0 7px 0 #1E3A8A, 0 12px 30px rgba(0,0,0,0.4) !important;
+}
+#btnSoundPause:active {
+    box-shadow: 0 2px 0 #1E3A8A !important;
+}
+#btnSoundPause.muted {
+    background: linear-gradient(180deg, #64748B, #475569) !important;
+    box-shadow: 0 5px 0 #334155, 0 8px 20px rgba(0,0,0,0.3) !important;
+    opacity: 0.9;
+}
+#btnSoundPause.muted:hover {
+    box-shadow: 0 7px 0 #334155, 0 12px 30px rgba(0,0,0,0.4) !important;
+    opacity: 1;
 }
 #btnHomeMenu {
     background: linear-gradient(180deg, #78909C, #546E7A) !important;
@@ -606,25 +663,70 @@ canvas {
         width: 100% !important;
         height: auto !important;
     }
+    /* Top corner sound button for main menu */
+    .soundMenuBtn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+        gap: 6px;
+    }
     /* Ensure HUD buttons stay visible and don't crowd the score on mobile */
     #hudButtons {
-        top: 6px;
-        right: 6px;
+        top: 8px;
+        right: 8px;
         gap: 6px;
     }
     .hudBtn {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
     }
     .hudBtn svg {
-        width: 18px;
-        height: 18px;
+        width: 19px;
+        height: 19px;
     }
 }
 
 /* Medium-small screens / mobile view adjustments */
 @media (max-width: 680px), (max-height: 520px) {
+    #mainMenu h1 {
+        font-size: clamp(38px, 8vw, 54px);
+        margin-bottom: 6px;
+    }
+    #mainMenu p {
+        font-size: clamp(13px, 3.5vw, 16px);
+        margin-bottom: 22px;
+    }
+    .menuBtn {
+        padding: 12px 36px;
+        font-size: 18px;
+    }
+    .soundMenuBtn {
+        top: 8px;
+        right: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        gap: 5px;
+    }
+    .soundMenuBtn svg {
+        width: 16px;
+        height: 16px;
+    }
+    #hudButtons {
+        top: 6px;
+        right: 6px;
+        gap: 5px;
+    }
+    .hudBtn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+    }
+    .hudBtn svg {
+        width: 17px;
+        height: 17px;
+    }
     .pixel-game-over-title {
         gap: 8px;
         margin-bottom: clamp(6px, 1.8vh, 12px);
@@ -685,6 +787,31 @@ canvas {
 
 /* Extra small / landscape phone screens */
 @media (max-width: 380px), (max-height: 380px) {
+    .soundMenuBtn {
+        top: 6px;
+        right: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+    .soundMenuBtn svg {
+        width: 14px;
+        height: 14px;
+    }
+    #hudButtons {
+        top: 4px;
+        right: 4px;
+        gap: 4px;
+    }
+    .hudBtn {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+    }
+    .hudBtn svg {
+        width: 15px;
+        height: 15px;
+    }
     .pixel-game-over-title {
         gap: 6px;
         margin-bottom: 5px;
